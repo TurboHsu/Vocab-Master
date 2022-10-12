@@ -23,6 +23,14 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 	if !strings.Contains(f.Request.URL.Path, "/student/api/Student/ClassTask/SubmitAnswerAndSave") && !strings.Contains(f.Request.URL.Path, "/student/api/Student/ClassTask/StartAnswer") {
 		return
 	}
+
+	//TODO:
+	/*
+		1. Grab words while accessing some tasklist
+		2. Invoke tips into vocab
+		3. Improve some experience
+	*/
+
 	//Get decoded content
 	rawByte, _ := f.Response.DecodedBody()
 

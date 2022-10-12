@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"runtime"
 
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
@@ -17,23 +18,28 @@ var textBox = widget.NewLabel("Vocab Master Started.\nWaiting for task begin..")
 func main() {
 	//Init font
 	os.Setenv("FYNE_FONT", "./font/red_bean.ttf")
-	//Get proxy
-	proxyReg, err := registry.OpenKey(registry.CURRENT_USER, `SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.QUERY_VALUE)
-	if err != nil {
-		panic(err)
-	}
-	defer proxyReg.Close()
-	proxyEnableRaw, _, err := proxyReg.GetIntegerValue("ProxyEnable")
-	if err != nil {
-		panic(err)
-	}
-	proxyServerRaw, _, err := proxyReg.GetStringValue("ProxyServer")
-	if err != nil {
-		panic(err)
+
+	//Windows Gets proxy
+	var proxyEnableRaw uint64
+	var proxyServerRaw string
+	if runtime.GOOS == "windows" {
+		proxyReg, err := registry.OpenKey(registry.CURRENT_USER, `SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.QUERY_VALUE)
+		if err != nil {
+			panic(err)
+		}
+		defer proxyReg.Close()
+		proxyEnableRaw, _, err = proxyReg.GetIntegerValue("ProxyEnable")
+		if err != nil {
+			panic(err)
+		}
+		proxyServerRaw, _, err = proxyReg.GetStringValue("ProxyServer")
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	//Set proxy
-	err = gosysproxy.SetGlobalProxy("localhost:38848")
+	err := gosysproxy.SetGlobalProxy("localhost:38848")
 	if err != nil {
 		panic(err)
 	}
@@ -65,15 +71,21 @@ func main() {
 	//Unset font
 	os.Unsetenv("FYNE_FONT")
 	//Unset proxy
-	if proxyEnableRaw == 1 {
-		err := gosysproxy.SetGlobalProxy(proxyServerRaw)
-		if err != nil {
-			panic(err)
+	if runtime.GOOS == "windows" {
+		if proxyEnableRaw == 1 {
+			err := gosysproxy.SetGlobalProxy(proxyServerRaw)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			err := gosysproxy.Off()
+			if err != nil {
+				panic(err)
+			}
 		}
-	} else {
-		err := gosysproxy.Off()
-		if err != nil {
-			panic(err)
-		}
+	}
+	err = gosysproxy.Off()
+	if err != nil {
+		panic(err)
 	}
 }
