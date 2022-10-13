@@ -50,7 +50,13 @@ func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 		//Setup progress ui
 		progressBar := widget.NewProgressBar()
 		completeBox := widget.NewLabel("")
-		infoBox := widget.NewLabel("New task detected. Gathering chosen words' info:\n" + fmt.Sprintln(dataset.CurrentTask.WordList))
+		var wordList string
+		if len(dataset.CurrentTask.WordList) > 8 {
+			wordList = fmt.Sprintln(dataset.CurrentTask.WordList[:8]) + "..."
+		} else {
+			wordList = fmt.Sprintln(dataset.CurrentTask.WordList)
+		}
+		infoBox := widget.NewLabel("New task detected. Gathering chosen words' info:\n" + wordList)
 		window.SetContent(container.NewVBox(infoBox, progressBar, completeBox, infoLable))
 
 		for i := 0; i < len(dataset.CurrentTask.WordList); i++ {
@@ -134,6 +140,8 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 
 		var contentIndex int
 		for i := 0; i < len(vocabTask.Options); i++ {
+			regex := regexp.MustCompile(`（.*?）`)
+			vocabTask.Options[i].Content = string(regex.ReplaceAll([]byte(vocabTask.Options[i].Content), []byte("")))
 			if compareTranslation(translation, vocabTask.Options[i].Content) {
 				contentIndex = i
 				break
@@ -144,7 +152,10 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		infoLable.SetText("Hey! The anwser is tagged out.")
 
 		//Tag out the correct answer
-		newJSON := strings.Replace(string(rawDecodedString), vocabTask.Options[contentIndex].Content, "-> "+vocabTask.Options[contentIndex].Content+" <-", 1)
+		regex := regexp.MustCompile(`（.*?）`)
+		newJSON := string(rawDecodedString)
+		newJSON = string(regex.ReplaceAll([]byte(newJSON), []byte("")))
+		newJSON = strings.Replace(newJSON, vocabTask.Options[contentIndex].Content, "-> "+vocabTask.Options[contentIndex].Content+" <-", 1)
 		//newJSON := strings.Replace(string(rawDecodedString), vocabTask.Stem.Content, vocabTask.Stem.Content+" ["+translation+"]", 1)
 		repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
 		vocabRawJSON.Data = JSONSalt + repackedBase64
@@ -164,6 +175,8 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			if words[i].Word == vocabTask.Stem.Content {
 				for j := 0; j < len(words[i].Content); j++ {
 					for k := 0; k < len(vocabTask.Options); k++ {
+						regex := regexp.MustCompile(`（.*?）`)
+						vocabTask.Options[k].Content = string(regex.ReplaceAll([]byte(vocabTask.Options[k].Content), []byte("")))
 						if compareTranslation(vocabTask.Options[k].Content, words[i].Content[j].Meaning) {
 							contentIndex = k
 							found = true
@@ -182,7 +195,10 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		infoLable.SetText("Hey! The anwser is tagged out.")
 
 		//Tag out the correct answer
-		newJSON := strings.Replace(string(rawDecodedString), vocabTask.Options[contentIndex].Content, "-> "+vocabTask.Options[contentIndex].Content+" <-", 1)
+		regex := regexp.MustCompile(`（.*?）`)
+		newJSON := string(rawDecodedString)
+		newJSON = string(regex.ReplaceAll([]byte(newJSON), []byte("")))
+		newJSON = strings.Replace(newJSON, vocabTask.Options[contentIndex].Content, "-> "+vocabTask.Options[contentIndex].Content+" <-", 1)
 		repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
 		vocabRawJSON.Data = JSONSalt + repackedBase64
 		body, _ := json.Marshal(vocabRawJSON)
