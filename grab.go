@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/andybalholm/brotli"
@@ -46,7 +47,8 @@ func grabWord(word string) {
 	wordInfo.Word = word
 	for i := 0; i < len(wordInfoRaw.Options); i++ {
 		var content WordInfoContent
-		content.Meaning = wordInfoRaw.Options[i].Content.Mean
+		regex := regexp.MustCompile(`（.*?）`)
+		content.Meaning = string(regex.ReplaceAll([]byte(wordInfoRaw.Options[i].Content.Mean), []byte("")))
 		//append usage
 		for j := 0; j < len(wordInfoRaw.Options[i].Content.Usage); j++ {
 			content.Usage = append(content.Usage, wordInfoRaw.Options[i].Content.Usage[j])

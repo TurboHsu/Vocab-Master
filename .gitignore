@@ -1,2 +1,4 @@
 cert/
 note.md
+*.exe
+*.zip

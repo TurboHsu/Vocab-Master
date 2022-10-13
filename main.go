@@ -1,12 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"runtime"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"github.com/Trisia/gosysproxy"
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
@@ -14,10 +13,9 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-var textBox = widget.NewLabel("Vocab Master Started.\nWaiting for task begin..")
-var wordCache [][]string
 var dataset VocabDataset
 var words []WordInfo
+var window fyne.Window
 
 func main() {
 	//Init font
@@ -51,7 +49,8 @@ func main() {
 	opts := &proxy.Options{
 		Addr:              "localhost:38848",
 		StreamLargeBodies: 1024 * 1024 * 5,
-		CaRootPath:        "./cert",
+		//CaRootPath:        "./cert",
+		CaRootPath: "C:\\Files\\Projects\\Go\\Vocab-Master\\cert",
 	}
 
 	p, err := proxy.NewProxy(opts)
@@ -62,18 +61,12 @@ func main() {
 	p.AddAddon(&VocabMasterHandler{})
 
 	a := app.New()
-	w := a.NewWindow("Vocab Master!")
-	clearButton := widget.NewButton("Clear vocabulary cache", func() {
-		wordCache = [][]string{}
-		textBox.SetText("Cleared!")
-	})
-	testButton := widget.NewButton("test", func() {
-		fmt.Println(words)
-	})
-	w.SetContent(container.NewVBox(textBox, clearButton, testButton))
+	window = a.NewWindow("Vocab Master!")
+	label := widget.NewLabel("Hey! Here is Vocab Master.\nJust start a class task, program will run itself ;)\n\nProject addr: github.com/TurboHsu/VocabMaster")
+	window.SetContent(label)
 
 	go p.Start()
-	w.ShowAndRun()
+	window.ShowAndRun()
 
 	//Unset font
 	os.Unsetenv("FYNE_FONT")
