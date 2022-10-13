@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"runtime"
 
@@ -14,6 +15,9 @@ import (
 )
 
 var textBox = widget.NewLabel("Vocab Master Started.\nWaiting for task begin..")
+var wordCache [][]string
+var dataset VocabDataset
+var words []WordInfo
 
 func main() {
 	//Init font
@@ -63,7 +67,10 @@ func main() {
 		wordCache = [][]string{}
 		textBox.SetText("Cleared!")
 	})
-	w.SetContent(container.NewVBox(textBox, clearButton))
+	testButton := widget.NewButton("test", func() {
+		fmt.Println(words)
+	})
+	w.SetContent(container.NewVBox(textBox, clearButton, testButton))
 
 	go p.Start()
 	w.ShowAndRun()

@@ -5,6 +5,7 @@ go 1.19
 require (
 	fyne.io/fyne/v2 v2.2.3
 	github.com/Trisia/gosysproxy v1.0.0
+	github.com/andybalholm/brotli v1.0.4
 	github.com/lqqyt2423/go-mitmproxy v1.3.1
 	github.com/sirupsen/logrus v1.9.0
 	golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec
@@ -12,7 +13,6 @@ require (
 
 require (
 	fyne.io/systray v1.10.1-0.20220621085403-9a2652634e93 // indirect
-	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fredbi/uri v0.0.0-20181227131451-3dcfdacbaaf3 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
