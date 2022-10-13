@@ -49,8 +49,7 @@ func main() {
 	opts := &proxy.Options{
 		Addr:              "localhost:38848",
 		StreamLargeBodies: 1024 * 1024 * 5,
-		//CaRootPath:        "./cert",
-		CaRootPath: "C:\\Files\\Projects\\Go\\Vocab-Master\\cert",
+		CaRootPath:        "./cert",
 	}
 
 	p, err := proxy.NewProxy(opts)
