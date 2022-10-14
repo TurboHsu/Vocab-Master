@@ -20,7 +20,7 @@ type VocabMasterHandler struct {
 	proxy.BaseAddon
 }
 
-var infoLable = widget.NewLabel("")
+var infoLabel = widget.NewLabel("")
 
 func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 	if f.Request.URL.Host != "app.vocabgo.com" {
@@ -57,7 +57,7 @@ func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 			wordList = fmt.Sprintln(dataset.CurrentTask.WordList)
 		}
 		infoBox := widget.NewLabel("New task detected. Gathering chosen words' info:\n" + wordList)
-		window.SetContent(container.NewVBox(infoBox, progressBar, completeBox, infoLable))
+		window.SetContent(container.NewVBox(infoBox, progressBar, completeBox, infoLabel))
 
 		for i := 0; i < len(dataset.CurrentTask.WordList); i++ {
 			//Show progress
@@ -114,7 +114,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 	//Introducing words
 	case 0:
 		//UI
-		infoLable.SetText("Seems like you are entering an new task!\nPlease wait until progress bar reach 100%.")
+		infoLabel.SetText("Seems like you are entering an new task!\nPlease wait until progress bar reach 100%.")
 	//Choose translation of specific word from a sentence
 	case 11:
 		var translation string
@@ -149,7 +149,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		}
 
 		//UI
-		infoLable.SetText("Hey! The anwser is tagged out.")
+		infoLabel.SetText("Hey! The anwser is tagged out.")
 
 		//Tag out the correct answer
 		regex := regexp.MustCompile(`（.*?）`)
@@ -192,7 +192,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		}
 
 		//UI
-		infoLable.SetText("Hey! The anwser is tagged out.")
+		infoLabel.SetText("Hey! The anwser is tagged out.")
 
 		//Tag out the correct answer
 		regex := regexp.MustCompile(`（.*?）`)
@@ -220,7 +220,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			}
 		}
 
-		infoLable.SetText("The anwser is:\n" + fmt.Sprintln(tag))
+		infoLabel.SetText("The anwser is:\n" + fmt.Sprintln(tag))
 
 		//Show answer in the UI
 
@@ -264,7 +264,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		}
 
 		//UI
-		infoLable.SetText("Hey! The anwser is printed out.")
+		infoLabel.SetText("Hey! The anwser is printed out.")
 
 		//Change the hint to the correct answer
 		newJSON := strings.Replace(string(rawDecodedString), word, tag, 1)
@@ -303,7 +303,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		}
 
 		//UI
-		infoLable.SetText("Hey! The anwser is printed out.")
+		infoLabel.SetText("Hey! The anwser is printed out.")
 
 		//Change the hint to the correct answer
 		newJSON := strings.Replace(string(rawDecodedString), word, tag, 1)
@@ -318,7 +318,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		f.Response.Body = b.Bytes()
 
 	default:
-		infoLable.SetText("WTF? This is not right. This might be a bug.\n")
+		infoLabel.SetText("WTF? This is not right. This might be a bug.\n")
 	}
 }
 

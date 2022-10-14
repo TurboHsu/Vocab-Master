@@ -118,3 +118,10 @@ type WordInfoContent struct {
 	Usage          []string
 	ExampleEnglish []string
 }
+
+type ProxyState struct {
+	Enabled bool
+	Server  string
+	Type    string
+	Device  string
+}
