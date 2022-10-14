@@ -1,16 +1,12 @@
 package main
 
 import (
-	"os"
-	"runtime"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/widget"
-	"github.com/Trisia/gosysproxy"
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/sys/windows/registry"
+	"os"
 )
 
 var dataset VocabDataset
@@ -22,26 +18,13 @@ func main() {
 	os.Setenv("FYNE_FONT", "./font/red_bean.ttf")
 
 	//Windows Gets proxy
-	var proxyEnableRaw uint64
-	var proxyServerRaw string
-	if runtime.GOOS == "windows" {
-		proxyReg, err := registry.OpenKey(registry.CURRENT_USER, `SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.QUERY_VALUE)
-		if err != nil {
-			panic(err)
-		}
-		defer proxyReg.Close()
-		proxyEnableRaw, _, err = proxyReg.GetIntegerValue("ProxyEnable")
-		if err != nil {
-			panic(err)
-		}
-		proxyServerRaw, _, err = proxyReg.GetStringValue("ProxyServer")
-		if err != nil {
-			panic(err)
-		}
+	originStatus, err := ReadSystemStatus()
+	if err != nil {
+		panic(err)
 	}
 
 	//Set proxy
-	err := gosysproxy.SetGlobalProxy("localhost:38848")
+	err = SetSystemProxy("localhost:38848")
 	if err != nil {
 		panic(err)
 	}
@@ -70,20 +53,7 @@ func main() {
 	//Unset font
 	os.Unsetenv("FYNE_FONT")
 	//Unset proxy
-	if runtime.GOOS == "windows" {
-		if proxyEnableRaw == 1 {
-			err := gosysproxy.SetGlobalProxy(proxyServerRaw)
-			if err != nil {
-				panic(err)
-			}
-		} else {
-			err := gosysproxy.Off()
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-	err = gosysproxy.Off()
+	err = ApplyProxyStatus(originStatus)
 	if err != nil {
 		panic(err)
 	}
