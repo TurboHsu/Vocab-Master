@@ -47,27 +47,31 @@ func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 		dataset.RequestInfo.Cookies = f.Request.Raw().Cookies()
 		dataset.RequestInfo.Header = f.Request.Raw().Header
 
-		//Setup progress ui
-		progressBar := widget.NewProgressBar()
-		completeBox := widget.NewLabel("")
-		var wordList string
-		if len(dataset.CurrentTask.WordList) > 8 {
-			wordList = fmt.Sprintln(dataset.CurrentTask.WordList[:8]) + "..."
-		} else {
-			wordList = fmt.Sprintln(dataset.CurrentTask.WordList)
-		}
-		infoBox := widget.NewLabel("New task detected. Gathering chosen words' info:\n" + wordList)
-		window.SetContent(container.NewVBox(infoBox, progressBar, completeBox, infoLabel))
+		//Create a thread to crawl all words
+		go func() {
+			//Setup progress ui
+			progressBar := widget.NewProgressBar()
+			completeBox := widget.NewLabel("Gathering word info...")
+			var wordList string
+			if len(dataset.CurrentTask.WordList) > 8 {
+				wordList = fmt.Sprintln(dataset.CurrentTask.WordList[:8]) + "..."
+			} else {
+				wordList = fmt.Sprintln(dataset.CurrentTask.WordList)
+			}
+			infoBox := widget.NewLabel("New task detected. Gathering chosen words' info:\n" + wordList)
+			window.SetContent(container.NewVBox(infoBox, progressBar, completeBox, infoLabel))
 
-		for i := 0; i < len(dataset.CurrentTask.WordList); i++ {
-			//Show progress
-			progressBar.SetValue(float64(i) / float64(len(dataset.CurrentTask.WordList)))
-			grabWord(dataset.CurrentTask.WordList[i])
-			log.Println("[I] Grabbed word list:" + dataset.CurrentTask.WordList[i])
-		}
-		progressBar.SetValue(1)
-		completeBox.SetText("Complete!")
+			for i := 0; i < len(dataset.CurrentTask.WordList); i++ {
+				//Show progress
+				progressBar.SetValue(float64(i) / float64(len(dataset.CurrentTask.WordList)))
+				grabWord(dataset.CurrentTask.WordList[i])
+				log.Println("[I] Grabbed word list:" + dataset.CurrentTask.WordList[i])
+			}
+			progressBar.SetValue(1)
+			completeBox.SetText("Complete!")
+		}()
 	}
+
 }
 
 func (c *VocabMasterHandler) Response(f *proxy.Flow) {
@@ -138,7 +142,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			}
 		}
 
-		var contentIndex int
+		var contentIndex int = -1
 		for i := 0; i < len(vocabTask.Options); i++ {
 			regex := regexp.MustCompile(`（.*?）`)
 			vocabTask.Options[i].Content = string(regex.ReplaceAll([]byte(vocabTask.Options[i].Content), []byte("")))
@@ -149,23 +153,30 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		}
 
 		//UI
-		infoLabel.SetText("Hey! The anwser is tagged out.\nAnd the answer is " + translation)
+		if found && contentIndex != -1 {
+			infoLabel.SetText("Hey! The answer is tagged out.\nAnd the answer is [" + translation + "]")
+		} else {
+			infoLabel.SetText("Warn: Answer not found. This might be a bug.")
+		}
 
-		//Tag out the correct answer
-		regex := regexp.MustCompile(`（.*?）`)
-		newJSON := string(rawDecodedString)
-		newJSON = string(regex.ReplaceAll([]byte(newJSON), []byte("")))
-		newJSON = strings.Replace(newJSON, vocabTask.Options[contentIndex].Content, "-> "+vocabTask.Options[contentIndex].Content+" <-", 1)
-		//newJSON := strings.Replace(string(rawDecodedString), vocabTask.Stem.Content, vocabTask.Stem.Content+" ["+translation+"]", 1)
-		repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
-		vocabRawJSON.Data = JSONSalt + repackedBase64
-		body, _ := json.Marshal(vocabRawJSON)
-		var b bytes.Buffer
-		br := brotli.NewWriter(&b)
-		br.Write(body)
-		br.Flush()
-		br.Close()
-		f.Response.Body = b.Bytes()
+		//Check whether index is found
+		if contentIndex != -1 {
+			//Tag out the correct answer
+			regex := regexp.MustCompile(`（.*?）`)
+			newJSON := string(rawDecodedString)
+			newJSON = string(regex.ReplaceAll([]byte(newJSON), []byte("")))
+			newJSON = strings.Replace(newJSON, vocabTask.Options[contentIndex].Content, "-> "+vocabTask.Options[contentIndex].Content+" <-", 1)
+			//newJSON := strings.Replace(string(rawDecodedString), vocabTask.Stem.Content, vocabTask.Stem.Content+" ["+translation+"]", 1)
+			repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
+			vocabRawJSON.Data = JSONSalt + repackedBase64
+			body, _ := json.Marshal(vocabRawJSON)
+			var b bytes.Buffer
+			br := brotli.NewWriter(&b)
+			br.Write(body)
+			br.Flush()
+			br.Close()
+			f.Response.Body = b.Bytes()
+		}
 
 	//Choose word from voice
 	case 22:
@@ -192,13 +203,62 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		}
 
 		//UI
-		infoLabel.SetText("Hey! The anwser is tagged out.\nAnd the answer is " + vocabTask.Options[contentIndex].Content)
+		if found && contentIndex != -1 {
+			infoLabel.SetText("Hey! The answer is tagged out.\nAnd the answer is [" + vocabTask.Options[contentIndex].Content + "]")
+		} else {
+			infoLabel.SetText("Warn: Answer not found. This might be a bug.")
+		}
 
-		//Tag out the correct answer
-		regex := regexp.MustCompile(`（.*?）`)
+		if contentIndex != -1 {
+			//Tag out the correct answer
+			regex := regexp.MustCompile(`（.*?）`)
+			newJSON := string(rawDecodedString)
+			newJSON = string(regex.ReplaceAll([]byte(newJSON), []byte("")))
+			newJSON = strings.Replace(newJSON, vocabTask.Options[contentIndex].Content, "-> "+vocabTask.Options[contentIndex].Content+" <-", 1)
+			repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
+			vocabRawJSON.Data = JSONSalt + repackedBase64
+			body, _ := json.Marshal(vocabRawJSON)
+			var b bytes.Buffer
+			br := brotli.NewWriter(&b)
+			br.Write(body)
+			br.Flush()
+			br.Close()
+			f.Response.Body = b.Bytes()
+		}
+
+	//Choose word pair
+	case 31:
+		var tag, detag []string
+		for i := 0; i < len(vocabTask.Stem.Remark); i++ {
+			for j := 0; j < len(vocabTask.Options); j++ {
+				if strings.Contains(vocabTask.Stem.Remark[i].SenMarked, vocabTask.Options[j].Content) {
+					tag = append(tag, vocabTask.Options[j].Content)
+				}
+			}
+		}
+
+		//Get the incorrect options
+		for i := 0; i < len(vocabTask.Options[i].Content); i++ {
+			var f bool
+			for j := 0; j < len(tag); j++ {
+				if vocabTask.Options[i].Content == tag[j] {
+					f = true
+					break
+				}
+			}
+			if !f {
+				detag = append(detag, vocabTask.Options[i].Content)
+			}
+		}
+
+		infoLabel.SetText("The incorrect answer is tagged out, and the answer is:\n" + fmt.Sprintln(tag))
+
+		//Show answer in the UI
+
 		newJSON := string(rawDecodedString)
-		newJSON = string(regex.ReplaceAll([]byte(newJSON), []byte("")))
-		newJSON = strings.Replace(newJSON, vocabTask.Options[contentIndex].Content, "-> "+vocabTask.Options[contentIndex].Content+" <-", 1)
+		for i := 0; i < len(detag); i++ {
+			newJSON = strings.Replace(newJSON, `"content":"`+detag[i]+`"`, `"content":"`+"NOT-["+detag[i]+"]-THIS"+`"`, 1)
+		}
 		repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
 		vocabRawJSON.Data = JSONSalt + repackedBase64
 		body, _ := json.Marshal(vocabRawJSON)
@@ -208,36 +268,6 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		br.Flush()
 		br.Close()
 		f.Response.Body = b.Bytes()
-
-	//Choose word pair
-	case 31:
-		var tag []string
-		for i := 0; i < len(vocabTask.Stem.Remark); i++ {
-			for j := 0; j < len(vocabTask.Options); j++ {
-				if strings.Contains(vocabTask.Stem.Remark[i].SenMarked, vocabTask.Options[j].Content) {
-					tag = append(tag, vocabTask.Options[j].Content)
-				}
-			}
-		}
-
-		infoLabel.SetText("The anwser is:\n" + fmt.Sprintln(tag))
-
-		//Show answer in the UI
-
-		//Changing the value of word will make it unclickable. This method is invalid.
-		//newJSON := string(rawDecodedString)
-		//for i := 0; i < len(tag); i++ {
-		//	newJSON = strings.Replace(newJSON, `"content":"`+tag[i]+`"`, `"content":"`+"-> "+tag[i]+" <-"+`"`, 1)
-		//}
-		//repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
-		//vocabRawJSON.Data = JSONSalt + repackedBase64
-		//body, _ := json.Marshal(vocabRawJSON)
-		//var b bytes.Buffer
-		//br := brotli.NewWriter(&b)
-		//br.Write(body)
-		//br.Flush()
-		//br.Close()
-		//f.Response.Body = b.Bytes()
 
 	//Organize word pieces
 	case 32:
@@ -264,7 +294,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		}
 
 		//UI
-		infoLabel.SetText("Hey! The anwser is printed out.")
+		infoLabel.SetText("Hey! The answer is printed out.\nAnd the answer")
 
 		//Change the hint to the correct answer
 		newJSON := strings.Replace(string(rawDecodedString), word, tag, 1)
@@ -303,22 +333,26 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		}
 
 		//UI
-		infoLabel.SetText("Hey! The anwser is printed out.")
+		if found {
+			infoLabel.SetText("Hey! The answer is printed out. And the answer is [" + tag + "]")
 
-		//Change the hint to the correct answer
-		newJSON := strings.Replace(string(rawDecodedString), word, tag, 1)
-		repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
-		vocabRawJSON.Data = JSONSalt + repackedBase64
-		body, _ := json.Marshal(vocabRawJSON)
-		var b bytes.Buffer
-		br := brotli.NewWriter(&b)
-		br.Write(body)
-		br.Flush()
-		br.Close()
-		f.Response.Body = b.Bytes()
+			//Change the hint to the correct answer
+			newJSON := strings.Replace(string(rawDecodedString), word, tag, 1)
+			repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
+			vocabRawJSON.Data = JSONSalt + repackedBase64
+			body, _ := json.Marshal(vocabRawJSON)
+			var b bytes.Buffer
+			br := brotli.NewWriter(&b)
+			br.Write(body)
+			br.Flush()
+			br.Close()
+			f.Response.Body = b.Bytes()
+		} else {
+			infoLabel.SetText("Warn: Answer not found. This might be a bug.")
+		}
 
 	default:
-		infoLabel.SetText("WTF? This is not right. This might be a bug.\n")
+		infoLabel.SetText("This task is not supported or this is a bug.\n")
 	}
 }
 
