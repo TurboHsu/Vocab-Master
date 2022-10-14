@@ -149,7 +149,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		}
 
 		//UI
-		infoLabel.SetText("Hey! The anwser is tagged out.")
+		infoLabel.SetText("Hey! The anwser is tagged out.\nAnd the answer is " + translation)
 
 		//Tag out the correct answer
 		regex := regexp.MustCompile(`（.*?）`)
@@ -192,7 +192,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		}
 
 		//UI
-		infoLabel.SetText("Hey! The anwser is tagged out.")
+		infoLabel.SetText("Hey! The anwser is tagged out.\nAnd the answer is " + vocabTask.Options[contentIndex].Content)
 
 		//Tag out the correct answer
 		regex := regexp.MustCompile(`（.*?）`)
@@ -323,32 +323,42 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 }
 
 func compareTranslation(str1 string, str2 string) bool {
+	//If they are actually the same, then that's good
+	if str1 == str2 {
+		return true
+	}
+
 	//Compare length first
 	if len(str1) != len(str2) {
 		return false
 	}
 
-	//Delete the classification of current word
-	str1 = strings.Split(str1, " ")[1]
-	str2 = strings.Split(str2, " ")[1]
+	//Split the classification of current word and translation
+	str1Slice := strings.Split(str1, " ")
+	str2Slice := strings.Split(str2, " ")
+
+	//Judge the classification of current word
+	if str1Slice[0] != str2Slice[0] {
+		return false
+	}
 
 	//Split
-	str1 = strings.ReplaceAll(str1, "；", "，")
-	str2 = strings.ReplaceAll(str2, "；", "，")
-	str1split := strings.Split(str1, "，")
-	str2split := strings.Split(str2, "，")
+	str1 = strings.ReplaceAll(str1Slice[1], "；", "，")
+	str2 = strings.ReplaceAll(str2Slice[1], "；", "，")
+	str1Slice = strings.Split(str1, "，")
+	str2Slice = strings.Split(str2, "，")
 
 	//Compare split length
-	if len(str1split) != len(str2split) {
+	if len(str1Slice) != len(str2Slice) {
 		return false
 	}
 
 	//Sort and compare content
-	sort.Strings(str1split)
-	sort.Strings(str2split)
+	sort.Strings(str1Slice)
+	sort.Strings(str2Slice)
 
-	for i := 0; i < len(str1split); i++ {
-		if str1split[i] != str2split[i] {
+	for i := 0; i < len(str1Slice); i++ {
+		if str1Slice[i] != str2Slice[i] {
 			return false
 		}
 	}

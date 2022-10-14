@@ -19,3 +19,8 @@
 ### 我要编译
 这是个go module，go ahead!
 
+### 鸣谢
+- [fyne.io](https://fyne.io)
+- [github.com/Trisia/gosysproxy](github.com/Trisia/gosysproxy)
+- [github.com/andybalholm/brotli](github.com/andybalholm/brotli)
+- [github.com/lqqyt2423/go-mitmproxy](github.com/lqqyt2423/go-mitmproxy)

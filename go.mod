@@ -7,7 +7,6 @@ require (
 	github.com/Trisia/gosysproxy v1.0.0
 	github.com/andybalholm/brotli v1.0.4
 	github.com/lqqyt2423/go-mitmproxy v1.3.1
-	github.com/sirupsen/logrus v1.9.0
 	golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec
 )
 
@@ -29,6 +28,7 @@ require (
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
+	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/srwiley/oksvg v0.0.0-20200311192757-870daf9aa564 // indirect
 	github.com/srwiley/rasterx v0.0.0-20200120212402-85cb7272f5e9 // indirect
 	github.com/stretchr/testify v1.7.2 // indirect

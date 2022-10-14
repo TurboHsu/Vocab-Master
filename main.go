@@ -1,12 +1,13 @@
 package main
 
 import (
+	"log"
+	"os"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/widget"
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
-	log "github.com/sirupsen/logrus"
-	"os"
 )
 
 var dataset VocabDataset
@@ -17,7 +18,7 @@ func main() {
 	//Init font
 	os.Setenv("FYNE_FONT", "./font/red_bean.ttf")
 
-	//Windows Gets proxy
+	//Get proxy
 	originStatus, err := ReadSystemStatus()
 	if err != nil {
 		panic(err)

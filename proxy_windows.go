@@ -3,6 +3,7 @@
 package main
 
 import (
+	"github.com/Trisia/gosysproxy"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -10,7 +11,12 @@ func ReadSystemStatus() ([]ProxyState, error) {
 	var proxyEnableRaw uint64
 	var proxyServerRaw string
 	proxyReg, err := registry.OpenKey(registry.CURRENT_USER, `SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.QUERY_VALUE)
-	if err != nil {
+	if err == registry.ErrNotExist {
+		//This system has never enabled system proxy.
+		return []ProxyState{{
+			Enabled: false,
+		}}, nil
+	} else if err != nil && err != registry.ErrNotExist {
 		return nil, err
 	}
 	defer proxyReg.Close()
