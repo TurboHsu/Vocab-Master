@@ -238,7 +238,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		}
 
 		//Get the incorrect options
-		for i := 0; i < len(vocabTask.Options[i].Content); i++ {
+		for i := 0; i < len(vocabTask.Options); i++ {
 			var f bool
 			for j := 0; j < len(tag); j++ {
 				if vocabTask.Options[i].Content == tag[j] {
@@ -281,6 +281,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 				for k := 0; k < len(words[i].Content[j].Usage); k++ {
 					if strings.Contains(words[i].Content[j].Usage[k], word) {
 						tag = words[i].Content[j].Usage[k]
+						found = true
 						break
 					}
 				}
@@ -293,21 +294,24 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			}
 		}
 
-		//UI
-		infoLabel.SetText("Hey! The answer is printed out.\nAnd the answer")
+		if found {
+			//UI
+			infoLabel.SetText("Hey! The answer is printed out.\nAnd the answer")
 
-		//Change the hint to the correct answer
-		newJSON := strings.Replace(string(rawDecodedString), word, tag, 1)
-		repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
-		vocabRawJSON.Data = JSONSalt + repackedBase64
-		body, _ := json.Marshal(vocabRawJSON)
-		var b bytes.Buffer
-		br := brotli.NewWriter(&b)
-		br.Write(body)
-		br.Flush()
-		br.Close()
-		f.Response.Body = b.Bytes()
-
+			//Change the hint to the correct answer
+			newJSON := strings.Replace(string(rawDecodedString), word, tag, 1)
+			repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
+			vocabRawJSON.Data = JSONSalt + repackedBase64
+			body, _ := json.Marshal(vocabRawJSON)
+			var b bytes.Buffer
+			br := brotli.NewWriter(&b)
+			br.Write(body)
+			br.Flush()
+			br.Close()
+			f.Response.Body = b.Bytes()
+		} else {
+			infoLabel.SetText("Warn: Answer not found. This might be a bug.")
+		}
 	//Write words from first chars
 	case 51:
 		regexFind := regexp.MustCompile(`"remark":".*?"`)
@@ -320,6 +324,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 				for k := 0; k < len(words[i].Content[j].Usage); k++ {
 					if strings.Contains(words[i].Content[j].Usage[k], word) {
 						tag = words[i].Content[j].Usage[k]
+						found = true
 						break
 					}
 				}
