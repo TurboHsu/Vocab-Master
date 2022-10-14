@@ -257,7 +257,8 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 
 		newJSON := string(rawDecodedString)
 		for i := 0; i < len(detag); i++ {
-			newJSON = strings.Replace(newJSON, `"content":"`+detag[i]+`"`, `"content":"`+"NOT-["+detag[i]+"]-THIS"+`"`, 1)
+			//newJSON = strings.Replace(newJSON, `"content":"`+detag[i]+`"`, `"content":"`+"NOT-["+detag[i]+"]-THIS"+`"`, 1)
+			newJSON = strings.Replace(newJSON, `"content":"`+detag[i]+`"`, `"content":"错误选项"`, 1)
 		}
 		repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
 		vocabRawJSON.Data = JSONSalt + repackedBase64
