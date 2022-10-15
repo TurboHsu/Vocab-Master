@@ -27,7 +27,7 @@ func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 		return
 	}
 	if strings.Contains(f.Request.URL.Path, "/student/api/Student/ClassTask/SubmitChoseWord") {
-		//Fulsh word storage and wordlist
+		//Flush word storage and wordlist
 		words = []WordInfo{}
 		dataset.CurrentTask.WordList = []string{}
 
