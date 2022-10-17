@@ -142,7 +142,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			}
 		}
 
-		var contentIndex int = -1
+		var contentIndex = -1
 		for i := 0; i < len(vocabTask.Options); i++ {
 			regex := regexp.MustCompile(`（.*?）`)
 			vocabTask.Options[i].Content = string(regex.ReplaceAll([]byte(vocabTask.Options[i].Content), []byte("")))

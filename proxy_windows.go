@@ -11,12 +11,7 @@ func ReadSystemStatus() ([]ProxyState, error) {
 	var proxyEnableRaw uint64
 	var proxyServerRaw string
 	proxyReg, err := registry.OpenKey(registry.CURRENT_USER, `SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.QUERY_VALUE)
-	if err == registry.ErrNotExist {
-		//This system has never enabled system proxy.
-		return []ProxyState{{
-			Enabled: false,
-		}}, nil
-	} else if err != nil && err != registry.ErrNotExist {
+	if err != nil {
 		return nil, err
 	}
 	defer proxyReg.Close()
@@ -25,10 +20,15 @@ func ReadSystemStatus() ([]ProxyState, error) {
 		return nil, err
 	}
 	proxyServerRaw, _, err = proxyReg.GetStringValue("ProxyServer")
-	if err != nil {
+	//If reading this key turns out an error, then this system has never enabled system proxy.
+	if err == registry.ErrNotExist {
+		//This system has never enabled system proxy.
+		return []ProxyState{{
+			Enabled: false,
+		}}, nil
+	} else if err != nil && err != registry.ErrNotExist {
 		return nil, err
 	}
-
 	result := make([]ProxyState, 1)
 	result[0] = ProxyState{
 		Enabled: proxyEnableRaw == 1,

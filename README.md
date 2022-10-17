@@ -14,7 +14,7 @@
 ### 如何使用？
 1. 下载release中的压缩包并且解压
 2. 运行vocab-master，会生成cert目录，内包含MITM所需的根证书。您只需要把.cer证书添加到您系统的信任根证书中
-3. 打开一个课堂任务，and feel great ;)
+3. 打开一个课堂任务，```重新选词```,and feel great ;)
 
 ### 我要编译
 这是个go module，go ahead!
