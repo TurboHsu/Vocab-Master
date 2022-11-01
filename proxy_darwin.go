@@ -156,9 +156,16 @@ func SetTypedProxy(t string, dev string, url string) error {
 
 func ApplyProxyStatus(states []ProxyState) error {
 	for _, state := range states {
-		err := SetTypedProxy(state.Type, state.Device, state.Server)
-		if err != nil {
-			return err
+		if state.Enabled {
+			err := SetTypedProxy(state.Type, state.Device, state.Server)
+			if err != nil {
+				return err
+			}
+		} else {
+			err := SetTypedProxyState(state.Type, state.Device, false)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
