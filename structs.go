@@ -13,6 +13,7 @@ type VocabDataset struct {
 		Cookies  []*http.Cookie
 		Header   http.Header
 	}
+	IsEnabled bool
 }
 
 type VocabRawJSONStruct struct {
