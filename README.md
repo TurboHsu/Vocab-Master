@@ -24,6 +24,9 @@
 ### 我要编译
 这是个go module，go ahead!
 
+#### 关于项目的开发
+自学任务由于需要再次分析，暂时搁置。
+
 ### 鸣谢
 - [fyne.io](https://fyne.io)
 - [github.com/Trisia/gosysproxy](https://github.com/Trisia/gosysproxy)
