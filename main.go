@@ -13,6 +13,8 @@ import (
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
 )
 
+const version = "1.0.1"
+
 // Declear some global variable
 var dataset VocabDataset = VocabDataset{IsEnabled: true}
 var words []WordInfo
@@ -65,7 +67,7 @@ func main() {
 	p.AddAddon(&VocabMasterHandler{})
 
 	a := app.New()
-	window = a.NewWindow("Vocab Master!")
+	window = a.NewWindow("Vocab Master! " + version)
 	label := widget.NewLabel("Hey! Here is Vocab Master.\nJust start a class task, program will run itself ;)\n\nProject addr: github.com/TurboHsu/VocabMaster")
 	toggler = widget.NewCheck("Enable processor", func(b bool) {
 		dataset.IsEnabled = b
