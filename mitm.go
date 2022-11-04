@@ -27,7 +27,7 @@ func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 	if f.Request.URL.Host != "app.vocabgo.com" {
 		return
 	}
-	if strings.Contains(f.Request.URL.Path, "/studentv1/api/Student/ClassTask/SubmitChoseWord") { //Adapt class task
+	if strings.Contains(f.Request.URL.Path, "/api/Student/ClassTask/SubmitChoseWord") { //Adapt class task
 		//Flush word storage and wordlist
 		words = []WordInfo{}
 		dataset.CurrentTask.WordList = []string{}
@@ -81,7 +81,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		return
 	}
 	//Adapt class task
-	if !strings.Contains(f.Request.URL.Path, "/studentv1/api/Student/ClassTask/SubmitAnswerAndSave") && !strings.Contains(f.Request.URL.Path, "/student/api/Student/ClassTask/StartAnswer") {
+	if !strings.Contains(f.Request.URL.Path, "/api/Student/ClassTask/SubmitAnswerAndSave") && !strings.Contains(f.Request.URL.Path, "/api/Student/ClassTask/StartAnswer") {
 		return
 	}
 
