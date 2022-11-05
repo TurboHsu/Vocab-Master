@@ -1,6 +1,8 @@
 # Vocab Master
-
 ## 词达人辅助工具
+
+<img src="icon/VocabMaster.svg" width="120" alt="logo">
+
 或许有点用
 
 ### Tip
