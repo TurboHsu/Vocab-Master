@@ -60,7 +60,7 @@ func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 				wordList = fmt.Sprintln(dataset.CurrentTask.WordList)
 			}
 			infoBox := widget.NewLabel("New task detected. Gathering chosen words' info:\n" + wordList)
-			window.SetContent(container.NewVBox(infoBox, progressBar, completeBox, infoLabel, toggler))
+			window.SetContent(container.NewVBox(infoBox, progressBar, completeBox, infoLabel, toggle))
 
 			for i := 0; i < len(dataset.CurrentTask.WordList); i++ {
 				//Show progress
