@@ -3,25 +3,25 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
-	"os"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
+	"log"
+	"os"
 )
 
 const version = "1.0.1"
 
-// Declear some global variable
+// Declare some global variable
 var dataset VocabDataset = VocabDataset{IsEnabled: true}
 var words []WordInfo
 var window fyne.Window
-var toggler *widget.Check
+var toggle *widget.Check
+var openBtn *widget.Button
 
-// Declear some flags
+// Declare some flags
 var shouldOperateProxy bool = true
 
 // Initiate the flag parser
@@ -32,8 +32,14 @@ func init() {
 func main() {
 	flag.Parse()
 
+	platform, err := GetPlatform()
+	if err != nil {
+		//Platform specific failed, use default
+		platform = GetDefaultPlatform()
+	}
+
 	//Init font
-	os.Setenv("FYNE_FONT", "./font/red_bean.ttf")
+	os.Setenv("FYNE_FONT", platform.Font)
 
 	var originStatus []ProxyState
 	if shouldOperateProxy {
@@ -56,7 +62,7 @@ func main() {
 	opts := &proxy.Options{
 		Addr:              "localhost:38848",
 		StreamLargeBodies: 1024 * 1024 * 5,
-		CaRootPath:        "./cert",
+		CaRootPath:        platform.CertDir,
 	}
 
 	p, err := proxy.NewProxy(opts)
@@ -68,13 +74,21 @@ func main() {
 
 	a := app.New()
 	window = a.NewWindow("Vocab Master! " + version)
-	label := widget.NewLabel("Hey! Here is Vocab Master.\nJust start a class task, program will run itself ;)\n\nProject addr: github.com/TurboHsu/VocabMaster")
-	toggler = widget.NewCheck("Enable processor", func(b bool) {
+	label := widget.NewLabel(
+		"Hey! Here is Vocab Master.\n" +
+			"Install this cert as trusted root: " + opts.CaRootPath + "\n" +
+			"Then start a class task, program will run itself ;)\n\n" +
+			"Project addr: github.com/TurboHsu/VocabMaster\n" +
+			"Font in use: " + platform.Font)
+	toggle = widget.NewCheck("Enable processor", func(b bool) {
 		dataset.IsEnabled = b
 		fmt.Println("Processor enabler is set to ", dataset.IsEnabled)
 	})
-	toggler.Checked = true
-	window.SetContent(container.NewVBox(label, toggler))
+	toggle.Checked = true
+	openBtn = widget.NewButton("Open certificates directory", func() {
+		platform.OpenCertDir()
+	})
+	window.SetContent(container.NewVBox(label, container.NewHBox(toggle, openBtn)))
 
 	go p.Start()
 	window.ShowAndRun()
@@ -88,5 +102,13 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+	}
+}
+
+func GetDefaultPlatform() Platform {
+	return Platform{
+		DataDir: ".",
+		CertDir: "./cert",
+		Font:    "./font/red_bean.ttf",
 	}
 }

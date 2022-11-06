@@ -126,3 +126,9 @@ type ProxyState struct {
 	Type    string
 	Device  string
 }
+
+type Platform struct {
+	DataDir string
+	CertDir string
+	Font    string
+}
