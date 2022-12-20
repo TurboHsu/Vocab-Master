@@ -27,7 +27,9 @@ func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 	if f.Request.URL.Host != "app.vocabgo.com" {
 		return
 	}
-	if strings.Contains(f.Request.URL.Path, "/api/Student/ClassTask/SubmitChoseWord") { //Adapt class task
+	if strings.Contains(f.Request.URL.Path, "/api/Student/ClassTask/SubmitChoseWord") || strings.Contains(
+		f.Request.URL.Path, "/api/Student/StudyTask/SubmitChoseWord") {
+		//Adapt class task
 		//Flush word storage and wordlist
 		words = []WordInfo{}
 		dataset.CurrentTask.WordList = []string{}
@@ -81,7 +83,11 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		return
 	}
 	//Adapt class task
-	if !strings.Contains(f.Request.URL.Path, "/api/Student/ClassTask/SubmitAnswerAndSave") && !strings.Contains(f.Request.URL.Path, "/api/Student/ClassTask/StartAnswer") {
+	if !strings.Contains(
+		f.Request.URL.Path, "/api/Student/ClassTask/SubmitAnswerAndSave") && !strings.Contains(
+		f.Request.URL.Path, "/api/Student/ClassTask/StartAnswer") && !strings.Contains(
+		f.Request.URL.Path, "/api/Student/StudyTask/SubmitAnswerAndSave") && !strings.Contains(
+		f.Request.URL.Path, "/api/Student/StudyTask/StartAnswer") {
 		return
 	}
 
@@ -325,11 +331,13 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			}
 		//Write words from first chars
 		case 51:
+			//Find from remark
 			regexFind := regexp.MustCompile(`"remark":".*?"`)
 			raw := regexFind.FindString(string(rawDecodedString))
 			word := raw[10 : len(raw)-1]
 			var tag string
 			var found bool
+			var blurSearch bool
 			for i := 0; i < len(words); i++ {
 				for j := 0; j < len(words[i].Content); j++ {
 					for k := 0; k < len(words[i].Content[j].Usage); k++ {
@@ -347,7 +355,16 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 					break
 				}
 			}
+			//If remark isn't found, then check the word length and wtip.
+			if !found {
+				for i := 0; i < len(words); i++ {
+					if vocabTask.WLen == len(words[i].Word) && vocabTask.WTip == words[i].Word[:len(vocabTask.WTip)] {
+						blurSearch = true
+						tag = words[i].Word
+					}
+				}
 
+			}
 			//UI
 			if found {
 				infoLabel.SetText("Hey! The answer is printed out. \n And the answer is [" + tag + "]")
@@ -360,6 +377,27 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 
 				//Change the translation
 				newJSON = strings.Replace(newJSON, word, tag, 1)
+
+				repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
+				vocabRawJSON.Data = JSONSalt + repackedBase64
+				body, _ := json.Marshal(vocabRawJSON)
+				var b bytes.Buffer
+				br := brotli.NewWriter(&b)
+				br.Write(body)
+				br.Flush()
+				br.Close()
+				f.Response.Body = b.Bytes()
+			} else if blurSearch {
+				infoLabel.SetText("The answer cannot be find in phrases,\nbut we found one through fuzzy queries.\nIt is " + tag)
+
+				//Change the tip
+				regexReplaceJSON := regexp.MustCompile(`"w_tip":".*?"`)
+				newJSON := regexReplaceJSON.ReplaceAllString(string(rawDecodedString), `"w_tip":"`+tag+`"`)
+
+				//Change the translation
+				regexReplaceJSON = regexp.MustCompile(`"remark":".*?"`)
+				result := regexReplaceJSON.Find([]byte(newJSON))
+				newJSON = regexReplaceJSON.ReplaceAllString(newJSON, string(result)[:len(string(result))-1]+" Possible answer:"+tag+`"`)
 
 				repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
 				vocabRawJSON.Data = JSONSalt + repackedBase64

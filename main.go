@@ -3,16 +3,17 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"os"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
-	"log"
-	"os"
 )
 
-const version = "1.0.1"
+const version = "1.0.2"
 
 // Declare some global variable
 var dataset VocabDataset = VocabDataset{IsEnabled: true}
