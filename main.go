@@ -17,7 +17,6 @@ const version = "1.0.2"
 
 // Declare some global variable
 var dataset VocabDataset = VocabDataset{IsEnabled: true}
-var words []WordInfo
 var window fyne.Window
 var toggle *widget.Check
 var auto *widget.Check

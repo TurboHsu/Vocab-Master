@@ -12,6 +12,7 @@ import (
 
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"github.com/TurboHsu/Vocab-Master/answer"
 	"github.com/TurboHsu/Vocab-Master/automatic"
 	"github.com/andybalholm/brotli"
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
@@ -32,7 +33,7 @@ func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 		f.Request.URL.Path, "/api/Student/StudyTask/SubmitChoseWord") {
 		//Adapt class task
 		//Flush word storage and wordlist
-		words = []WordInfo{}
+		answer.WordList = []answer.WordInfo{}
 		dataset.CurrentTask.WordList = []string{}
 
 		//Put wordlist into dataset
@@ -173,11 +174,11 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			var found bool
 			stemConverted := strings.ReplaceAll(vocabTask.Stem.Content, "  ", " ")
 		Loop11:
-			for i := 0; i < len(words); i++ {
-				for j := 0; j < len(words[i].Content); j++ {
-					for k := 0; k < len(words[i].Content[j].ExampleEnglish); k++ {
-						if words[i].Content[j].ExampleEnglish[k] == stemConverted {
-							translation = words[i].Content[j].Meaning
+			for i := 0; i < len(answer.WordList); i++ {
+				for j := 0; j < len(answer.WordList[i].Content); j++ {
+					for k := 0; k < len(answer.WordList[i].Content[j].ExampleEnglish); k++ {
+						if answer.WordList[i].Content[j].ExampleEnglish[k] == stemConverted {
+							translation = answer.WordList[i].Content[j].Meaning
 							found = true
 							break Loop11
 						}
@@ -226,13 +227,13 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			var contentIndex int
 			var found bool
 		Loop22:
-			for i := 0; i < len(words); i++ {
-				if words[i].Word == vocabTask.Stem.Content {
-					for j := 0; j < len(words[i].Content); j++ {
+			for i := 0; i < len(answer.WordList); i++ {
+				if answer.WordList[i].Word == vocabTask.Stem.Content {
+					for j := 0; j < len(answer.WordList[i].Content); j++ {
 						for k := 0; k < len(vocabTask.Options); k++ {
 							regex := regexp.MustCompile(`（.*?）`)
 							vocabTask.Options[k].Content = string(regex.ReplaceAll([]byte(vocabTask.Options[k].Content), []byte("")))
-							if compareTranslation(vocabTask.Options[k].Content, words[i].Content[j].Meaning) {
+							if compareTranslation(vocabTask.Options[k].Content, answer.WordList[i].Content[j].Meaning) {
 								contentIndex = k
 								found = true
 								break Loop22
@@ -318,11 +319,11 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			var tag string
 			var found bool
 		Loop32:
-			for i := 0; i < len(words); i++ {
-				for j := 0; j < len(words[i].Content); j++ {
-					for k := 0; k < len(words[i].Content[j].Usage); k++ {
-						if strings.Contains(words[i].Content[j].Usage[k], word) {
-							tag = words[i].Content[j].Usage[k]
+			for i := 0; i < len(answer.WordList); i++ {
+				for j := 0; j < len(answer.WordList[i].Content); j++ {
+					for k := 0; k < len(answer.WordList[i].Content[j].Usage); k++ {
+						if strings.Contains(answer.WordList[i].Content[j].Usage[k], word) {
+							tag = answer.WordList[i].Content[j].Usage[k]
 							found = true
 							break Loop32
 						}
@@ -358,11 +359,11 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			var found bool
 			var blurSearch bool
 		Loop51:
-			for i := 0; i < len(words); i++ {
-				for j := 0; j < len(words[i].Content); j++ {
-					for k := 0; k < len(words[i].Content[j].Usage); k++ {
-						if strings.Contains(words[i].Content[j].Usage[k], word) {
-							tag = words[i].Content[j].Usage[k]
+			for i := 0; i < len(answer.WordList); i++ {
+				for j := 0; j < len(answer.WordList[i].Content); j++ {
+					for k := 0; k < len(answer.WordList[i].Content[j].Usage); k++ {
+						if strings.Contains(answer.WordList[i].Content[j].Usage[k], word) {
+							tag = answer.WordList[i].Content[j].Usage[k]
 							found = true
 							break Loop51
 						}
@@ -371,10 +372,10 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			}
 			//If remark isn't found, then check the word length and wtip.
 			if !found {
-				for i := 0; i < len(words); i++ {
-					if vocabTask.WLen == len(words[i].Word) && vocabTask.WTip == words[i].Word[:len(vocabTask.WTip)] {
+				for i := 0; i < len(answer.WordList); i++ {
+					if vocabTask.WLen == len(answer.WordList[i].Word) && vocabTask.WTip == answer.WordList[i].Word[:len(vocabTask.WTip)] {
 						blurSearch = true
-						tag = words[i].Word
+						tag = answer.WordList[i].Word
 					}
 				}
 

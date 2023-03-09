@@ -132,17 +132,6 @@ type WordInfoJSON struct {
 	} `json:"options,omitempty"`
 }
 
-type WordInfo struct {
-	Word    string
-	Content []WordInfoContent
-}
-
-type WordInfoContent struct {
-	Meaning        string
-	Usage          []string
-	ExampleEnglish []string
-}
-
 type ProxyState struct {
 	Enabled bool
 	Server  string

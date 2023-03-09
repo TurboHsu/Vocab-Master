@@ -1,5 +1,7 @@
 package answer
 
-func FindAnswer() {
+var WordList []WordInfo
+
+func FindAnswer(topicID int) {
 	// Do stuff
 }

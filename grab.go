@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/TurboHsu/Vocab-Master/answer"
 	"github.com/andybalholm/brotli"
 )
 
@@ -46,11 +47,11 @@ func grabWord(word string) {
 
 	//Add to word storage
 	//Due to Issue #10, we need to check the json data version, the data form is different in different versions
-	var wordInfo WordInfo
+	var wordInfo answer.WordInfo
 	wordInfo.Word = word
 	if wordInfoRaw.Version == "1" { //Old version like CET4
 		for i := 0; i < len(wordInfoRaw.Options); i++ {
-			var content WordInfoContent
+			var content answer.WordInfoContent
 			regex := regexp.MustCompile(`（.*?）`)
 			content.Meaning = string(regex.ReplaceAll([]byte(wordInfoRaw.Options[i].Content.Mean), []byte("")))
 			content.Meaning = strings.ReplaceAll(content.Meaning, "\n", "")
@@ -66,7 +67,7 @@ func grabWord(word string) {
 		}
 	} else if wordInfoRaw.Version == "2" { //New version like JJ_2
 		for i := 0; i < len(wordInfoRaw.Means); i++ {
-			var content WordInfoContent
+			var content answer.WordInfoContent
 			//Getting rid of shit and get meaning
 			regex := regexp.MustCompile(`（.*?）`)
 			content.Meaning = string(regex.ReplaceAll([]byte(
@@ -90,7 +91,7 @@ func grabWord(word string) {
 	} else {
 		log.Printf("[E] Error when grabbing words: version %s unsupported!\n", wordInfoRaw.Version)
 	}
-	words = append(words, wordInfo)
+	answer.WordList = append(answer.WordList, wordInfo)
 }
 
 func switchContentEncoding(res *http.Response) (bodyReader io.Reader, err error) {
