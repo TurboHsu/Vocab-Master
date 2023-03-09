@@ -14,6 +14,7 @@ type VocabDataset struct {
 		Header   http.Header
 	}
 	IsEnabled bool
+	IsAuto    bool
 }
 
 type VocabRawJSONStruct struct {

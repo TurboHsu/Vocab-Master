@@ -20,6 +20,7 @@ var dataset VocabDataset = VocabDataset{IsEnabled: true}
 var words []WordInfo
 var window fyne.Window
 var toggle *widget.Check
+var auto *widget.Check
 var openBtn *widget.Button
 
 // Declare some flags
@@ -86,6 +87,11 @@ func main() {
 		fmt.Println("Processor enabler is set to ", dataset.IsEnabled)
 	})
 	toggle.Checked = true
+	auto = widget.NewCheck("Enable Automation", func(b bool) {
+		dataset.IsAuto = b
+		fmt.Println("Automation enabler is set to ", dataset.IsAuto)
+	})
+	auto.Checked = false
 	openBtn = widget.NewButton("Open certificates directory", func() {
 		platform.OpenCertDir()
 	})
@@ -96,6 +102,9 @@ func main() {
 
 	//Unset font
 	os.Unsetenv("FYNE_FONT")
+
+	//DEBUG
+	shouldOperateProxy = false
 
 	if shouldOperateProxy {
 		//Unset proxy

@@ -12,6 +12,7 @@ import (
 
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"github.com/TurboHsu/Vocab-Master/automatic"
 	"github.com/andybalholm/brotli"
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
 )
@@ -72,6 +73,14 @@ func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 			}
 			progressBar.SetValue(1)
 			completeBox.SetText("Complete!")
+
+			// If is auto, use auto function
+			if dataset.IsAuto {
+				var sendData automatic.VocabDataset
+				sendData = automatic.VocabDataset(dataset)
+				automatic.FetchDataset(sendData)
+				automatic.StartAutomation()
+			}
 		}()
 	}
 
@@ -88,6 +97,11 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		f.Request.URL.Path, "/api/Student/ClassTask/StartAnswer") && !strings.Contains(
 		f.Request.URL.Path, "/api/Student/StudyTask/SubmitAnswerAndSave") && !strings.Contains(
 		f.Request.URL.Path, "/api/Student/StudyTask/StartAnswer") {
+		return
+	}
+
+	// Automated actions should not be MITMed.
+	if dataset.IsAuto {
 		return
 	}
 
@@ -140,21 +154,16 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			var translation string
 			var found bool
 			stemConverted := strings.ReplaceAll(vocabTask.Stem.Content, "  ", " ")
+		Loop11:
 			for i := 0; i < len(words); i++ {
 				for j := 0; j < len(words[i].Content); j++ {
 					for k := 0; k < len(words[i].Content[j].ExampleEnglish); k++ {
 						if words[i].Content[j].ExampleEnglish[k] == stemConverted {
 							translation = words[i].Content[j].Meaning
 							found = true
-							break
+							break Loop11
 						}
 					}
-					if found {
-						break
-					}
-				}
-				if found {
-					break
 				}
 			}
 
@@ -198,6 +207,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		case 22:
 			var contentIndex int
 			var found bool
+		Loop22:
 			for i := 0; i < len(words); i++ {
 				if words[i].Word == vocabTask.Stem.Content {
 					for j := 0; j < len(words[i].Content); j++ {
@@ -207,14 +217,10 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 							if compareTranslation(vocabTask.Options[k].Content, words[i].Content[j].Meaning) {
 								contentIndex = k
 								found = true
-								break
+								break Loop22
 							}
 						}
-						if found {
-							break
-						}
 					}
-					break
 				}
 			}
 
@@ -293,21 +299,16 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			word := raw[10 : len(raw)-1]
 			var tag string
 			var found bool
+		Loop32:
 			for i := 0; i < len(words); i++ {
 				for j := 0; j < len(words[i].Content); j++ {
 					for k := 0; k < len(words[i].Content[j].Usage); k++ {
 						if strings.Contains(words[i].Content[j].Usage[k], word) {
 							tag = words[i].Content[j].Usage[k]
 							found = true
-							break
+							break Loop32
 						}
 					}
-					if found {
-						break
-					}
-				}
-				if found {
-					break
 				}
 			}
 
@@ -338,21 +339,16 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			var tag string
 			var found bool
 			var blurSearch bool
+		Loop51:
 			for i := 0; i < len(words); i++ {
 				for j := 0; j < len(words[i].Content); j++ {
 					for k := 0; k < len(words[i].Content[j].Usage); k++ {
 						if strings.Contains(words[i].Content[j].Usage[k], word) {
 							tag = words[i].Content[j].Usage[k]
 							found = true
-							break
+							break Loop51
 						}
 					}
-					if found {
-						break
-					}
-				}
-				if found {
-					break
 				}
 			}
 			//If remark isn't found, then check the word length and wtip.
