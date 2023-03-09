@@ -76,9 +76,27 @@ func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 
 			// If is auto, use auto function
 			if dataset.IsAuto {
-				var sendData automatic.VocabDataset
-				sendData = automatic.VocabDataset(dataset)
-				automatic.FetchDataset(sendData)
+				// Get task type
+				var taskType string
+				if strings.Contains(f.Request.URL.Path, "/api/Student/ClassTask/SubmitChoseWord") {
+					taskType = "Class"
+				} else {
+					taskType = "Study"
+				}
+
+				automatic.FetchDataset(automatic.VocabDataset{
+					CurrentTask: automatic.CurrentTask{
+						WordList: dataset.CurrentTask.WordList,
+						TaskSet:  dataset.CurrentTask.TaskSet,
+						TaskID:   dataset.CurrentTask.TaskID,
+						TaskType: taskType,
+					},
+					RequestInfo: automatic.RequestInfo{
+						Versions: dataset.RequestInfo.Versions,
+						Cookies:  dataset.RequestInfo.Cookies,
+						Header:   dataset.RequestInfo.Header,
+					},
+				})
 				automatic.StartAutomation()
 			}
 		}()
