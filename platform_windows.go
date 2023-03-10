@@ -17,7 +17,7 @@ func GetPlatform() (Platform, error) {
 
 	return Platform{
 		DataDir: appDataDir,
-		CertDir: filepath.Join(appDataDir, "cert"),
+		CertDir: filepath.Join(dataDir, "cert"),
 		Font:    filepath.Join(dataDir, "font", "red_bean.ttf"),
 	}, nil
 }
