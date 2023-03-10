@@ -1,4 +1,4 @@
-package main
+package grab
 
 import (
 	"compress/flate"
@@ -17,7 +17,7 @@ import (
 	"github.com/andybalholm/brotli"
 )
 
-func grabWord(word string) {
+func GrabWord(word string, dataset *VocabDataset) {
 	url := fmt.Sprintf("https://app.vocabgo.com/student/api/Student/Course/StudyWordInfo?course_id=%s&list_id=%s&word=%s&timestamp=%d&version=%s&app_type=1",
 		dataset.CurrentTask.TaskID,
 		dataset.CurrentTask.TaskSet,
@@ -92,6 +92,7 @@ func grabWord(word string) {
 		log.Printf("[E] Error when grabbing words: version %s unsupported!\n", wordInfoRaw.Version)
 	}
 	answer.WordList = append(answer.WordList, wordInfo)
+	return
 }
 
 func switchContentEncoding(res *http.Response) (bodyReader io.Reader, err error) {

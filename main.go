@@ -10,17 +10,20 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"github.com/TurboHsu/Vocab-Master/automatic"
+	"github.com/TurboHsu/Vocab-Master/grab"
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
 )
 
 const version = "1.0.2"
 
 // Declare some global variable
-var dataset VocabDataset = VocabDataset{IsEnabled: true}
+var dataset grab.VocabDataset 
 var window fyne.Window
 var toggle *widget.Check
-var auto *widget.Check
+var auto *widget.Button
 var openBtn *widget.Button
+
 
 // Declare some flags
 var shouldOperateProxy bool = true
@@ -85,19 +88,20 @@ func main() {
 			"Project addr: github.com/TurboHsu/VocabMaster\n" +
 			"Font in use: " + platform.Font)
 	toggle = widget.NewCheck("Enable processor", func(b bool) {
-		dataset.IsEnabled = b
-		fmt.Println("Processor enabler is set to ", dataset.IsEnabled)
+		IsEnabled = b
+		fmt.Println("Processor enabler is set to ", IsEnabled)
 	})
 	toggle.Checked = true
-	auto = widget.NewCheck("Enable Automation", func(b bool) {
-		dataset.IsAuto = b
-		fmt.Println("Automation enabler is set to ", dataset.IsAuto)
+
+	auto = widget.NewButton("Automation", func() {
+		autoWindow := automatic.GenerateNewWindow(&a)
+		autoWindow.Show()
 	})
-	auto.Checked = false
+
 	openBtn = widget.NewButton("Open certificates directory", func() {
 		platform.OpenCertDir()
 	})
-	window.SetContent(container.NewVBox(label, container.NewHBox(toggle, openBtn)))
+	window.SetContent(container.NewVBox(label, container.NewHBox(toggle, openBtn, auto)))
 
 	go p.Start()
 	window.ShowAndRun()

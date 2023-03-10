@@ -13,9 +13,12 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/TurboHsu/Vocab-Master/answer"
 	"github.com/TurboHsu/Vocab-Master/automatic"
+	"github.com/TurboHsu/Vocab-Master/grab"
 	"github.com/andybalholm/brotli"
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
 )
+
+var IsEnabled bool = true
 
 type VocabMasterHandler struct {
 	proxy.BaseAddon
@@ -26,6 +29,10 @@ var progressBar *widget.ProgressBar
 
 func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 	if f.Request.URL.Host != "app.vocabgo.com" {
+		return
+	}
+	// Automation mode hook
+	if automatic.Enabled {
 		return
 	}
 	if strings.Contains(f.Request.URL.Path, "/api/Student/ClassTask/SubmitChoseWord") || strings.Contains(
@@ -68,37 +75,11 @@ func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 			for i := 0; i < len(dataset.CurrentTask.WordList); i++ {
 				//Show progress
 				progressBar.SetValue(float64(i) / float64(len(dataset.CurrentTask.WordList)))
-				grabWord(dataset.CurrentTask.WordList[i])
+				grab.GrabWord(dataset.CurrentTask.WordList[i], (*grab.VocabDataset)(&dataset))
 				log.Println("[I] Grabbed word list:" + dataset.CurrentTask.WordList[i])
 			}
 			progressBar.SetValue(1)
 			completeBox.SetText("Complete!")
-
-			// If is auto, use auto function
-			if dataset.IsAuto {
-				// Get task type
-				var taskType string
-				if strings.Contains(f.Request.URL.Path, "/api/Student/ClassTask/SubmitChoseWord") {
-					taskType = "Class"
-				} else {
-					taskType = "Study"
-				}
-
-				automatic.FetchDataset(automatic.VocabDataset{
-					CurrentTask: automatic.CurrentTask{
-						WordList: dataset.CurrentTask.WordList,
-						TaskSet:  dataset.CurrentTask.TaskSet,
-						TaskID:   dataset.CurrentTask.TaskID,
-						TaskType: taskType,
-					},
-					RequestInfo: automatic.RequestInfo{
-						Versions: dataset.RequestInfo.Versions,
-						Cookies:  dataset.RequestInfo.Cookies,
-						Header:   dataset.RequestInfo.Header,
-					},
-				})
-				automatic.StartAutomation()
-			}
 		}()
 	}
 
@@ -109,6 +90,16 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 	if f.Request.URL.Host != "app.vocabgo.com" {
 		return
 	}
+
+	// Automation hook & processor bypass
+	if automatic.Enabled {
+		// Task detail hook
+		if strings.Contains(f.Request.URL.Path, "/api/Student/ClassTask/Info") {
+			automatic.TaskDetailProcessor(f)
+		}
+		return
+	}
+
 	//Adapt class task
 	if !strings.Contains(
 		f.Request.URL.Path, "/api/Student/ClassTask/SubmitAnswerAndSave") && !strings.Contains(
@@ -118,13 +109,9 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		return
 	}
 
-	// Automated actions should not be MITMed.
-	if dataset.IsAuto {
-		return
-	}
 
 	//Switch of processor
-	if dataset.IsEnabled {
+	if IsEnabled {
 
 		//If the progress bar has hit 100%, then hide it
 		if progressBar.Value == 1 {
