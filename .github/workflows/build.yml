@@ -1,0 +1,27 @@
+name: Build Multiplatform
+
+on:
+  push:
+    branches: [ 'master' ]
+  pull_request:
+    branches: [ 'master' ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.20
+      - name: Setup script permissions
+        run: chmod +x build_macos.sh
+      - name: Build for Windows x64
+        run: GOOS=windows GOARCH=amd64 go build -ldflags "-H windowsgui -s -w" .
+      - name: Build for Windows x86
+        run: GOOS=windows GOARCH=i386 go build -ldflags "-H windowsgui -s -w" .
+      - name: Build for macOS with Intel
+        run: GOOS=darwin GOARCH=amd64 ./build_macos.sh
+      - name: Build for macOS with Apple Silicon
+        run: GOOS=darwin GOARCH=arm64 ./build_macos.sh
