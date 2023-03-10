@@ -33,6 +33,9 @@ func init() {
 func main() {
 	flag.Parse()
 
+	//DEBUG
+	//shouldOperateProxy = false
+
 	platform, err := GetPlatform()
 	if err != nil {
 		//Platform specific failed, use default
@@ -101,9 +104,6 @@ func main() {
 
 	//Unset font
 	os.Unsetenv("FYNE_FONT")
-
-	//DEBUG
-	shouldOperateProxy = false
 
 	if shouldOperateProxy {
 		//Unset proxy
