@@ -82,6 +82,32 @@ func FindAnswer(topicID int, vocabTaskInfo VocabTaskStruct, rawJSON string) (ans
 				}
 			}
 		}
+		
+		// Get the words
+		var word string
+		var words []string
+		lowerWord := strings.ToLower(ans.Detail.Word)
+		for i := 0; i < len(lowerWord); i++ {
+			if (lowerWord[i] <= 'z' && lowerWord[i] >= 'a') {
+				word += string(lowerWord[i])
+			}
+			if (lowerWord[i] == ' ') {
+				words = append(words, string(word))
+				word = ""
+			}
+		}
+		
+		// Find correct order
+		for i := 0; i < len(words); i++ {
+			for j := 0; j < len(vocabTaskInfo.Options); j++ {
+				if vocabTaskInfo.Options[j].Content == words[i] {
+					ans.Index = append(ans.Index, j)
+					break
+				}
+			}
+		}
+		
+
 
 	// Some fill in blank
 	case 51:
