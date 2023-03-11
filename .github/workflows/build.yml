@@ -17,13 +17,20 @@ jobs:
           go-version: 1.20
       - name: Setup script permissions
         run: chmod +x build_macos.sh
-      - name: Grab dependencies
-        run: go get
+      - name: Run mod tidy
+        run: go mod tidy
+      - name: Test the project
+        run: go test -v ./...
       - name: Build for Windows x64
-        run: GOOS=windows GOARCH=amd64 go build -ldflags "-H windowsgui -s -w" .
+        run: GOOS=windows GOARCH=amd64 go build -ldflags "-H windowsgui -s -w" -o opt/windows_amd64/Vocab-Master.exe
       - name: Build for Windows x86
-        run: GOOS=windows GOARCH=i386 go build -ldflags "-H windowsgui -s -w" .
+        run: GOOS=windows GOARCH=i386 go build -ldflags "-H windowsgui -s -w" opt/windows_i386/Vocab-Master.exe
       - name: Build for macOS with Intel
         run: GOOS=darwin GOARCH=amd64 ./build_macos.sh
       - name: Build for macOS with Apple Silicon
         run: GOOS=darwin GOARCH=arm64 ./build_macos.sh
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: CI Build
+          path: opt/
