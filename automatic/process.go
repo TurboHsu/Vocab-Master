@@ -25,6 +25,8 @@ func TaskDetailProcessor(f *proxy.Flow) {
 	taskDetail.TaskID = f.Request.URL.Query().Get("task_id")
 	taskDetail.TaskType = f.Request.URL.Query().Get("task_type")
 	taskDetail.Versions = f.Request.URL.Query().Get("version")
+	taskDetail.ReleaseID = f.Request.URL.Query().Get("release_id")
+	taskDetail.AppType = f.Request.URL.Query().Get("app_type")
 
 	// Append some info to dataset
 	dataset.CurrentTask.TaskSet = taskDetail.Data.WordList[0].ListID

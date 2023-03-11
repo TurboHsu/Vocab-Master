@@ -15,18 +15,19 @@ import (
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
 )
 
-const version = "1.0.2"
+const version = "1.2.0"
 
 // Declare some global variable
-var dataset grab.VocabDataset 
+var dataset grab.VocabDataset
 var window fyne.Window
 var toggle *widget.Check
 var auto *widget.Button
 var openBtn *widget.Button
-
+var jsHijackCheck *widget.Check
 
 // Declare some flags
 var shouldOperateProxy bool = true
+var jsHijack bool = false
 
 // Initiate the flag parser
 func init() {
@@ -98,10 +99,21 @@ func main() {
 		autoWindow.Show()
 	})
 
+	jsHijackCheck = widget.NewCheck("Enable JS hijack", func(b bool) {
+		jsHijack = b
+		jsHijackCheck.Text = "Waiting for JS Hijacking..."
+	})
+
 	openBtn = widget.NewButton("Open certificates directory", func() {
 		platform.OpenCertDir()
 	})
-	window.SetContent(container.NewVBox(label, container.NewHBox(toggle, openBtn, auto)))
+
+	window.SetContent(
+		container.NewVBox(label,
+			container.NewHBox(toggle, jsHijackCheck),
+			container.NewHBox(openBtn, auto),
+		),
+	)
 
 	go p.Start()
 	window.ShowAndRun()

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -31,6 +32,16 @@ func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 	if f.Request.URL.Host != "app.vocabgo.com" {
 		return
 	}
+	////Debug
+	//if !debug {
+	//	//Update Cookie and Header
+	//	dataset.RequestInfo.Cookies = f.Request.Raw().Cookies()
+	//	dataset.RequestInfo.Header = f.Request.Raw().Header
+	//} else {
+	//	f.Request.Header = dataset.RequestInfo.Header
+	//	f.Request.Raw().Cookies() = dataset.RequestInfo.Cookies
+	//}
+
 	// Automation mode hook
 	if automatic.Enabled {
 		return
@@ -91,6 +102,23 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		return
 	}
 
+	// JS Hijack
+	if jsHijack && strings.Contains(f.Request.URL.Path, "/student/js/") {
+		decBody, _ := f.Response.DecodedBody()
+		Body := string(decBody)
+		if strings.Contains(Body, "errorMobile") {
+			log.Printf("Modding javascript: %s", f.Request.URL.Path)
+			Body = strings.ReplaceAll(Body, `;return null!=e}`, `;return true}`)
+			var b bytes.Buffer
+			br := gzip.NewWriter(&b)
+			br.Write([]byte(Body))
+			br.Flush()
+			br.Close()
+			f.Response.Body = b.Bytes()
+			jsHijackCheck.Text = "JS Hijack: Done!"
+		}
+	}
+
 	// Automation hook & processor bypass
 	if automatic.Enabled {
 		// Task detail hook
@@ -108,7 +136,6 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		f.Request.URL.Path, "/api/Student/StudyTask/StartAnswer") {
 		return
 	}
-
 
 	//Switch of processor
 	if IsEnabled {

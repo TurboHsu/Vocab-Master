@@ -13,7 +13,7 @@ import (
 )
 
 // Do a post request using stored cookies and headers
-func doPOST(url string, data string) {
+func doPOST(url string, data string) string {
 	req, _ := http.NewRequest("POST", url, strings.NewReader(data))
 	//Add headers and cookies
 	req.Header = dataset.RequestInfo.Header
@@ -27,7 +27,8 @@ func doPOST(url string, data string) {
 	}
 	defer response.Body.Close()
 	read, _, _ := switchContentEncoding(response)
-	io.Copy(io.Discard, read)
+	raw, _ := io.ReadAll(read)
+	return string(raw)
 }
 
 // Do a get request using stored cookies and headers
