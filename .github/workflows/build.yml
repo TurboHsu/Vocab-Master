@@ -10,21 +10,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v2
         with:
-          go-version: 1.20
-      - name: Setup script permissions
-        run: chmod +x build_macos.sh
-      - name: Run mod tidy
-        run: go mod tidy
+          go-version: 1.20.2
       - name: Test the project
         run: go test -v ./...
       - name: Build for Windows x64
         run: GOOS=windows GOARCH=amd64 go build -ldflags "-H windowsgui -s -w" -o opt/windows_amd64/Vocab-Master.exe
       - name: Build for Windows x86
         run: GOOS=windows GOARCH=i386 go build -ldflags "-H windowsgui -s -w" opt/windows_i386/Vocab-Master.exe
+      - name: Setup script permissions
+        run: chmod +x build_macos.sh
       - name: Build for macOS with Intel
         run: GOOS=darwin GOARCH=amd64 ./build_macos.sh
       - name: Build for macOS with Apple Silicon
