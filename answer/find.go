@@ -82,24 +82,22 @@ func FindAnswer(topicID int, vocabTaskInfo VocabTaskStruct, rawJSON string) (ans
 				}
 			}
 		}
-		
+
 		// Get the words
 		var word string
 		var words []string
-		// Get rid of chinese charactors
+		lowerWord := strings.ToLower(ans.Detail.Word)
 
-		//TODO: Here are some problems. Its not correct.
-
-		for i := 0; i < len(word); i++ {
-			if ((word[i] <= 'z' && word[i] >= 'a') || word[i] == '\'') {
-				word += string(word[i])
+		for i := 0; i < len(lowerWord); i++ {
+			if (lowerWord[i] <= 'z' && lowerWord[i] >= 'a') || lowerWord[i] == '\'' {
+				word += string(lowerWord[i])
 			}
-			if (word[i] == ' ') {
+			if lowerWord[i] == ' ' {
 				words = append(words, string(word))
 				word = ""
 			}
 		}
-		
+
 		// Find correct order
 		for i := 0; i < len(words); i++ {
 			for j := 0; j < len(vocabTaskInfo.Options); j++ {
@@ -109,8 +107,6 @@ func FindAnswer(topicID int, vocabTaskInfo VocabTaskStruct, rawJSON string) (ans
 				}
 			}
 		}
-		
-
 
 	// Some fill in blank
 	case 51:
