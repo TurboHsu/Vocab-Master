@@ -26,6 +26,9 @@ func FetchDataset(data grab.VocabDataset) {
 func startAutomation() {
 	taskPath := "ClassTask" //TODO: This field is not implemented, may get from url from mitm hook.
 
+
+	// TODO: IDK why subbmitting multiple words may contain problems, should do them separatly, like 5 as a group.
+
 	// Grab all words
 	info.SetText("Grabbing words...")
 	progressBar.SetValue(0)
@@ -33,7 +36,7 @@ func startAutomation() {
 	for i := 0; i < len(pendingWord); i++ {
 		progressBar.SetValue(float64(i) / float64(len(pendingWord)))
 		// Grab word
-		grab.GrabWord(pendingWord[i], (*grab.VocabDataset)(&dataset), 500)
+		grab.GrabWord(pendingWord[i], (*grab.VocabDataset)(&dataset), 50)
 		info.SetText("Grabbing word: " + pendingWord[i])
 		log.Println("Grabbing word: ", pendingWord[i])
 	}
@@ -76,7 +79,7 @@ func startAutomation() {
 	url = fmt.Sprintf(`https://app.vocabgo.com/student/api/Student/%s/StartAnswer?task_id=%s&task_type=%s&release_id=%s&opt_img_w=1947&opt_font_size=108&opt_font_c=%%23000000&it_img_w=2287&it_font_size=121&timestamp=%d&version=%s&app_type=%s`,
 		taskPath,
 		taskDetail.TaskID,
-		taskDetail.TaskType, //TODO:BUG here
+		taskDetail.TaskType,
 		taskDetail.ReleaseID,
 		lastTime,
 		taskDetail.Versions,
@@ -114,9 +117,11 @@ MainLoop:
 		// This is letting u read through something.
 		case 0:
 			// Get the next TopicCode and do nothing.
+			log.Println("Doing Topic mode 0.")
 			topicCode = vocabTaskData.TopicCode
 		// Choose some translation for the word.
 		case 11:
+			log.Println("Doing Topic mode 11.")
 			ans := answer.FindAnswer(11, answer.VocabTaskStruct(vocabTaskData), "")
 			// Submit the ans or guess one
 			if !ans.Found {
@@ -136,7 +141,7 @@ MainLoop:
 			resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
 			if !strings.Contains(resp, `"code":1`) {
 				info.SetText("Failed to verify the answer.")
-				log.Println("Failed to verify the answer.")
+				log.Println("Failed to verify the answer, topic mode 11.")
 				break MainLoop
 			}
 			// Parse the JSON
@@ -167,7 +172,7 @@ MainLoop:
 				resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
 				if !strings.Contains(resp, `"code":1`) {
 					info.SetText("Failed to verify the answer.")
-					log.Println("Failed to verify the answer.")
+					log.Println("Failed to verify the answer after retrying, topic mode 11.")
 					break MainLoop
 				}
 				// Parse the JSON
@@ -186,6 +191,7 @@ MainLoop:
 			}
 		// Choose translation from voice
 		case 22:
+			log.Println("Doing Topic mode 22.")
 			ans := answer.FindAnswer(22, answer.VocabTaskStruct(vocabTaskData), "")
 			// Submit the ans or guess one
 			if !ans.Found {
@@ -205,7 +211,7 @@ MainLoop:
 			resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
 			if !strings.Contains(resp, `"code":1`) {
 				info.SetText("Failed to verify the answer.")
-				log.Println("Failed to verify the answer.")
+				log.Println("Failed to verify the answer, topic mode 22.")
 				break MainLoop
 			}
 			// Parse the JSON
@@ -236,7 +242,7 @@ MainLoop:
 				resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
 				if !strings.Contains(resp, `"code":1`) {
 					info.SetText("Failed to verify the answer.")
-					log.Println("Failed to verify the answer.")
+					log.Println("Failed to verify the answer after retrying, topic mode 22.")
 					break MainLoop
 				}
 				// Parse the JSON
@@ -255,6 +261,7 @@ MainLoop:
 			}
 		// Choose word pair
 		case 31:
+			log.Println("Doing Topic mode 31.")
 			ans := answer.FindAnswer(31, answer.VocabTaskStruct(vocabTaskData), "")
 			// If does not found then idk wtf
 			if !ans.Found {
@@ -285,7 +292,7 @@ MainLoop:
 				resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
 				if !strings.Contains(resp, `"code":1`) {
 					info.SetText("Failed to verify the answer.")
-					log.Println("Failed to verify the answer.")
+					log.Println("Failed to verify the answer, topic mode 31.")
 					break MainLoop
 				}
 				// Parse the JSON
@@ -312,6 +319,7 @@ MainLoop:
 			// Verify the answer
 		// Organize word pieces
 		case 32:
+			log.Println("Doing Topic mode 32.")
 			ans := answer.FindAnswer(32, answer.VocabTaskStruct(vocabTaskData), string(rawDecodedString))
 			// If not found then guess one
 			var wordsToSubmit []string
@@ -348,7 +356,7 @@ MainLoop:
 			resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
 			if !strings.Contains(resp, `"code":1`) {
 				info.SetText("Failed to verify the answer.")
-				log.Println("Failed to verify the answer.")
+				log.Println("Failed to verify the answer, topic mode 32.")
 				break MainLoop
 			}
 			// Parse the JSON
@@ -392,7 +400,7 @@ MainLoop:
 				resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
 				if !strings.Contains(resp, `"code":1`) {
 					info.SetText("Failed to verify the answer.")
-					log.Println("Failed to verify the answer.")
+					log.Println("Failed to verify the answer, after retrying, topic mode 32.")
 					break MainLoop
 				}
 				// Parse the JSON
@@ -412,6 +420,7 @@ MainLoop:
 
 		// Fill in blanks
 		case 51:
+			log.Println("Doing Topic mode 51.")
 			ans := answer.FindAnswer(51, answer.VocabTaskStruct(vocabTaskData), string(rawDecodedString))
 			// If really cant find one, fuck it.
 			if !ans.Found && !ans.Detail.Uncertain {
@@ -431,7 +440,7 @@ MainLoop:
 			resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
 			if !strings.Contains(resp, `"code":1`) {
 				info.SetText("Failed to verify the answer.")
-				log.Println("Failed to verify the answer.")
+				log.Println("Failed to verify the answer, topic mode 51.")
 				break MainLoop
 			}
 			// Parse the JSON
@@ -462,7 +471,7 @@ MainLoop:
 				resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
 				if !strings.Contains(resp, `"code":1`) {
 					info.SetText("Failed to verify the answer.")
-					log.Println("Failed to verify the answer.")
+					log.Println("Failed to verify the answer, after retrying, topic mode 51.")
 					break MainLoop
 				}
 				// Parse the JSON
@@ -528,6 +537,8 @@ MainLoop:
 		json.Unmarshal(submitAnswerAndSaveResponseDesaltedDecoded, &vocabTaskData)
 		// Update the topic code
 		topicCode = vocabTaskData.TopicCode
+		// Update the rawDecodedString
+		rawDecodedString = string(submitAnswerAndSaveResponseDesaltedDecoded)
 	}
 	info.SetText("Automation finished.")
 	progressBar.SetValue(1)

@@ -2,6 +2,7 @@ package automatic
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
 )
@@ -32,6 +33,7 @@ func TaskDetailProcessor(f *proxy.Flow) {
 	dataset.CurrentTask.TaskSet = taskDetail.Data.WordList[0].ListID
 	dataset.CurrentTask.TaskID = taskDetail.Data.WordList[0].CourseID
 	dataset.RequestInfo.Versions = taskDetail.Versions
+	taskDetail.TaskType = fmt.Sprint(taskDetail.Data.TaskType)
 
 	// Process pending words
 	for _, word := range taskDetail.Data.WordList {

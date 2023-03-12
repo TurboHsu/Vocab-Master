@@ -3,7 +3,6 @@ package automatic
 import (
 	"compress/flate"
 	"compress/gzip"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"log"
@@ -75,6 +74,6 @@ func switchContentEncoding(res *http.Response) (bodyReader io.Reader, encoder st
 // Splits the salt and the valid JSON string
 func splitSalt(raw string) (salt string, validJSON string) {
 	salt = raw[0:32]
-	validJSON = base64.StdEncoding.EncodeToString([]byte(raw[32:]))
+	validJSON = raw[32:]
 	return
 }

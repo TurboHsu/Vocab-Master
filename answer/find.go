@@ -86,12 +86,15 @@ func FindAnswer(topicID int, vocabTaskInfo VocabTaskStruct, rawJSON string) (ans
 		// Get the words
 		var word string
 		var words []string
-		lowerWord := strings.ToLower(ans.Detail.Word)
-		for i := 0; i < len(lowerWord); i++ {
-			if (lowerWord[i] <= 'z' && lowerWord[i] >= 'a') {
-				word += string(lowerWord[i])
+		// Get rid of chinese charactors
+
+		//TODO: Here are some problems. Its not correct.
+
+		for i := 0; i < len(word); i++ {
+			if ((word[i] <= 'z' && word[i] >= 'a') || word[i] == '\'') {
+				word += string(word[i])
 			}
-			if (lowerWord[i] == ' ') {
+			if (word[i] == ' ') {
 				words = append(words, string(word))
 				word = ""
 			}
@@ -120,7 +123,7 @@ func FindAnswer(topicID int, vocabTaskInfo VocabTaskStruct, rawJSON string) (ans
 			for j := 0; j < len(WordList[i].Content); j++ {
 				for k := 0; k < len(WordList[i].Content[j].Usage); k++ {
 					if strings.Contains(WordList[i].Content[j].Usage[k], ans.Detail.Raw) {
-						ans.Detail.Word = WordList[i].Content[j].Usage[k]
+						ans.Detail.Word = WordList[i].Word
 						ans.Found = true
 						break Loop51
 					}

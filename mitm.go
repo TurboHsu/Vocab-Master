@@ -86,7 +86,7 @@ func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 			for i := 0; i < len(dataset.CurrentTask.WordList); i++ {
 				//Show progress
 				progressBar.SetValue(float64(i) / float64(len(dataset.CurrentTask.WordList)))
-				grab.GrabWord(dataset.CurrentTask.WordList[i], (*grab.VocabDataset)(&dataset), 100)
+				grab.GrabWord(dataset.CurrentTask.WordList[i], (*grab.VocabDataset)(&dataset), 50)
 				log.Println("[I] Grabbed word list:" + dataset.CurrentTask.WordList[i])
 			}
 			progressBar.SetValue(1)
