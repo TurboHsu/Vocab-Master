@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/TurboHsu/Vocab-Master/answer"
 	"github.com/TurboHsu/Vocab-Master/grab"
 )
 
@@ -31,7 +33,7 @@ func startAutomation() {
 	for i := 0; i < len(pendingWord); i++ {
 		progressBar.SetValue(float64(i) / float64(len(pendingWord)))
 		// Grab word
-		grab.GrabWord(pendingWord[i], (*grab.VocabDataset)(&dataset))
+		grab.GrabWord(pendingWord[i], (*grab.VocabDataset)(&dataset), 500)
 		info.SetText("Grabbing word: " + pendingWord[i])
 		log.Println("Grabbing word: ", pendingWord[i])
 	}
@@ -57,7 +59,7 @@ func startAutomation() {
 	info.SetText("Submitting word list...")
 	// Generate the url
 	// call get
-	url := fmt.Sprintf("https://app.vocabgo.com/api/Student/%s/SubmitChoseWord",
+	url := fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/SubmitChoseWord",
 		taskPath,
 	)
 	resp := doPOST(url, jsonSubmitWord)
@@ -74,7 +76,7 @@ func startAutomation() {
 	url = fmt.Sprintf(`https://app.vocabgo.com/student/api/Student/%s/StartAnswer?task_id=%s&task_type=%s&release_id=%s&opt_img_w=1947&opt_font_size=108&opt_font_c=%%23000000&it_img_w=2287&it_font_size=121&timestamp=%d&version=%s&app_type=%s`,
 		taskPath,
 		taskDetail.TaskID,
-		taskDetail.TaskType,
+		taskDetail.TaskType, //TODO:BUG here
 		taskDetail.ReleaseID,
 		lastTime,
 		taskDetail.Versions,
@@ -97,8 +99,10 @@ func startAutomation() {
 	var vocabTaskData VocabTaskStruct
 	json.Unmarshal(startAnswerResponseDesaltedDecoded, &vocabTaskData)
 
+	progressBar.SetValue(0.5)
+
 	var topicCode string
-	//var rawDecodedString string = string(startAnswerResponseDesaltedDecoded)
+	var rawDecodedString string = string(startAnswerResponseDesaltedDecoded)
 	timeDelay, _ := strconv.Atoi(timeDelayEntry.Text)
 MainLoop:
 	for {
@@ -109,20 +113,376 @@ MainLoop:
 		switch vocabTaskData.TopicMode {
 		// This is letting u read through something.
 		case 0:
-			//Get the next TopicCode and do nothing.
+			// Get the next TopicCode and do nothing.
 			topicCode = vocabTaskData.TopicCode
-			// WIP
-			//case 11:
-			//	ans := answer.FindAnswer(11, answer.VocabTaskStruct(vocabTaskData), "")
-			//case 22:
-			//	ans := answer.FindAnswer(22, answer.VocabTaskStruct(vocabTaskData), "")
-			//case 31:
-			//	ans := answer.FindAnswer(31, answer.VocabTaskStruct(vocabTaskData), "")
-			//case 32:
-			//	ans := answer.FindAnswer(32, answer.VocabTaskStruct(vocabTaskData), string(rawDecodedString))
-			//case 51:
-			//	ans := answer.FindAnswer(51, answer.VocabTaskStruct(vocabTaskData), string(rawDecodedString))
+		// Choose some translation for the word.
+		case 11:
+			ans := answer.FindAnswer(11, answer.VocabTaskStruct(vocabTaskData), "")
+			// Submit the ans or guess one
+			if !ans.Found {
+				ans.Index = append(ans.Index, rand.Intn(4))
+			}
+			// Summon JSON
+			verifyJSON := fmt.Sprintf(`{"answer":%d,"topic_code":"%s","timestamp":%d,"version":"%s","sign":"%s","app_type":%s}`,
+				ans.Index[0],
+				topicCode,
+				time.Now().UnixMilli(),
+				taskDetail.Versions,
+				summonSign(),
+				taskDetail.AppType,
+			)
 
+			// Verify the answer
+			resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
+			if !strings.Contains(resp, `"code":1`) {
+				info.SetText("Failed to verify the answer.")
+				log.Println("Failed to verify the answer.")
+				break MainLoop
+			}
+			// Parse the JSON
+			var verifyAnswerResponse StartAnswerResponseStruct
+			json.Unmarshal([]byte(resp), &verifyAnswerResponse)
+			// Get rid of salt and parse
+			_, verifyAnswerResponseDesalted := splitSalt(verifyAnswerResponse.Data)
+			// Decode the base64
+			verifyAnswerResponseDesaltedDecoded, _ := base64.StdEncoding.DecodeString(verifyAnswerResponseDesalted)
+			// Unmarshal the data using json
+			var verifyAnswerResponseDesaltedDecodedData VerifyAnswerResponseStruct
+			json.Unmarshal(verifyAnswerResponseDesaltedDecoded, &verifyAnswerResponseDesaltedDecodedData)
+			// Update topicCode
+			topicCode = vocabTaskData.TopicCode
+			// Check whether the answer is correct
+			if verifyAnswerResponseDesaltedDecodedData.AnswerResult != 1 {
+				// Its incorrect. Lets guess another one.
+				ans.Index[0] = rand.Intn(4)
+				// Summon JSON
+				verifyJSON := fmt.Sprintf(`{"answer":%d,"topic_code":"%s","timestamp":%d,"version":"%s","sign":"%s","app_type":%s}`,
+					ans.Index[0],
+					topicCode,
+					time.Now().UnixMilli(),
+					taskDetail.Versions,
+					summonSign(),
+					taskDetail.AppType,
+				)
+				resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
+				if !strings.Contains(resp, `"code":1`) {
+					info.SetText("Failed to verify the answer.")
+					log.Println("Failed to verify the answer.")
+					break MainLoop
+				}
+				// Parse the JSON
+				var verifyAnswerResponse StartAnswerResponseStruct
+				json.Unmarshal([]byte(resp), &verifyAnswerResponse)
+				// Get rid of salt and parse
+				_, verifyAnswerResponseDesalted := splitSalt(verifyAnswerResponse.Data)
+				// Decode the base64
+				verifyAnswerResponseDesaltedDecoded, _ := base64.StdEncoding.DecodeString(verifyAnswerResponseDesalted)
+				// Unmarshal the data using json
+				var verifyAnswerResponseDesaltedDecodedData VerifyAnswerResponseStruct
+				json.Unmarshal(verifyAnswerResponseDesaltedDecoded, &verifyAnswerResponseDesaltedDecodedData)
+				// Update topicCode
+				topicCode = vocabTaskData.TopicCode
+				// If its wrong again then idk what to do.
+			}
+		// Choose translation from voice
+		case 22:
+			ans := answer.FindAnswer(22, answer.VocabTaskStruct(vocabTaskData), "")
+			// Submit the ans or guess one
+			if !ans.Found {
+				ans.Index = append(ans.Index, rand.Intn(4))
+			}
+			// Summon JSON
+			verifyJSON := fmt.Sprintf(`{"answer":%d,"topic_code":"%s","timestamp":%d,"version":"%s","sign":"%s","app_type":%s}`,
+				ans.Index[0],
+				topicCode,
+				time.Now().UnixMilli(),
+				taskDetail.Versions,
+				summonSign(),
+				taskDetail.AppType,
+			)
+
+			// Verify the answer
+			resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
+			if !strings.Contains(resp, `"code":1`) {
+				info.SetText("Failed to verify the answer.")
+				log.Println("Failed to verify the answer.")
+				break MainLoop
+			}
+			// Parse the JSON
+			var verifyAnswerResponse StartAnswerResponseStruct
+			json.Unmarshal([]byte(resp), &verifyAnswerResponse)
+			// Get rid of salt and parse
+			_, verifyAnswerResponseDesalted := splitSalt(verifyAnswerResponse.Data)
+			// Decode the base64
+			verifyAnswerResponseDesaltedDecoded, _ := base64.StdEncoding.DecodeString(verifyAnswerResponseDesalted)
+			// Unmarshal the data using json
+			var verifyAnswerResponseDesaltedDecodedData VerifyAnswerResponseStruct
+			json.Unmarshal(verifyAnswerResponseDesaltedDecoded, &verifyAnswerResponseDesaltedDecodedData)
+			// Update topicCode
+			topicCode = vocabTaskData.TopicCode
+			// Check whether the answer is correct
+			if verifyAnswerResponseDesaltedDecodedData.AnswerResult != 1 {
+				// Its incorrect. Lets guess another one.
+				ans.Index[0] = rand.Intn(4)
+				// Summon JSON
+				verifyJSON := fmt.Sprintf(`{"answer":%d,"topic_code":"%s","timestamp":%d,"version":"%s","sign":"%s","app_type":%s}`,
+					ans.Index[0],
+					topicCode,
+					time.Now().UnixMilli(),
+					taskDetail.Versions,
+					summonSign(),
+					taskDetail.AppType,
+				)
+				resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
+				if !strings.Contains(resp, `"code":1`) {
+					info.SetText("Failed to verify the answer.")
+					log.Println("Failed to verify the answer.")
+					break MainLoop
+				}
+				// Parse the JSON
+				var verifyAnswerResponse StartAnswerResponseStruct
+				json.Unmarshal([]byte(resp), &verifyAnswerResponse)
+				// Get rid of salt and parse
+				_, verifyAnswerResponseDesalted := splitSalt(verifyAnswerResponse.Data)
+				// Decode the base64
+				verifyAnswerResponseDesaltedDecoded, _ := base64.StdEncoding.DecodeString(verifyAnswerResponseDesalted)
+				// Unmarshal the data using json
+				var verifyAnswerResponseDesaltedDecodedData VerifyAnswerResponseStruct
+				json.Unmarshal(verifyAnswerResponseDesaltedDecoded, &verifyAnswerResponseDesaltedDecodedData)
+				// Update topicCode
+				topicCode = vocabTaskData.TopicCode
+				// If its wrong again then idk what to do.
+			}
+		// Choose word pair
+		case 31:
+			ans := answer.FindAnswer(31, answer.VocabTaskStruct(vocabTaskData), "")
+			// If does not found then idk wtf
+			if !ans.Found {
+				times := rand.Intn(len(vocabTaskData.Options) + 1)
+				var rangeIndex []int
+				for i := 0; i < len(vocabTaskData.Options); i++ {
+					rangeIndex = append(rangeIndex, i)
+				}
+				// Shuffle the range index
+				rand.Shuffle(len(rangeIndex), func(i, j int) { rangeIndex[i], rangeIndex[j] = rangeIndex[j], rangeIndex[i] })
+				for i := 0; i < times; i++ {
+					ans.Index = append(ans.Index, rangeIndex[i])
+				}
+			}
+
+			for i := 0; i < len(ans.Index); i++ {
+				// Summon JSON
+				verifyJSON := fmt.Sprintf(`{"answer":%d,"topic_code":"%s","timestamp":%d,"version":"%s","sign":"%s","app_type":%s}`,
+					ans.Index[i],
+					topicCode,
+					time.Now().UnixMilli(),
+					taskDetail.Versions,
+					summonSign(),
+					taskDetail.AppType,
+				)
+
+				// Verify the answer
+				resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
+				if !strings.Contains(resp, `"code":1`) {
+					info.SetText("Failed to verify the answer.")
+					log.Println("Failed to verify the answer.")
+					break MainLoop
+				}
+				// Parse the JSON
+				var verifyAnswerResponse StartAnswerResponseStruct
+				json.Unmarshal([]byte(resp), &verifyAnswerResponse)
+				// Get rid of salt and parse
+				_, verifyAnswerResponseDesalted := splitSalt(verifyAnswerResponse.Data)
+				// Decode the base64
+				verifyAnswerResponseDesaltedDecoded, _ := base64.StdEncoding.DecodeString(verifyAnswerResponseDesalted)
+				// Unmarshal the data using json
+				var verifyAnswerResponseDesaltedDecodedData VerifyAnswerResponseStruct
+				json.Unmarshal(verifyAnswerResponseDesaltedDecoded, &verifyAnswerResponseDesaltedDecodedData)
+				// Update topicCode
+				topicCode = vocabTaskData.TopicCode
+				// Check whether its done
+				if verifyAnswerResponseDesaltedDecodedData.OverStatus == 1 {
+					break
+				}
+			}
+
+			// overStatus = 1 means its over. 2 means its not over
+			// Submit the ans recursively
+
+			// Verify the answer
+		// Organize word pieces
+		case 32:
+			ans := answer.FindAnswer(32, answer.VocabTaskStruct(vocabTaskData), string(rawDecodedString))
+			// If not found then guess one
+			var wordsToSubmit []string
+			if !ans.Found {
+				// Get all options
+				for _, option := range vocabTaskData.Options {
+					wordsToSubmit = append(wordsToSubmit, option.Content)
+				}
+				// Shuffle the options
+				rand.Shuffle(len(wordsToSubmit), func(i, j int) { wordsToSubmit[i], wordsToSubmit[j] = wordsToSubmit[j], wordsToSubmit[i] })
+			} else {
+				// Append the found answer in the correct order
+				for _, index := range ans.Index {
+					wordsToSubmit = append(wordsToSubmit, vocabTaskData.Options[index].Content)
+				}
+			}
+			// Verify the answer
+			// Summon answer string
+			var answerString string
+			for _, word := range wordsToSubmit {
+				answerString += word + ","
+			}
+
+			// Summon JSON
+			verifyJSON := fmt.Sprintf(`{"answer":"%s","topic_code":"%s","timestamp":%d,"version":"%s","sign":"%s","app_type":%s}`,
+				answerString[:len(answerString)-1],
+				topicCode,
+				time.Now().UnixMilli(),
+				taskDetail.Versions,
+				summonSign(),
+				taskDetail.AppType,
+			)
+			// Verify the answer
+			resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
+			if !strings.Contains(resp, `"code":1`) {
+				info.SetText("Failed to verify the answer.")
+				log.Println("Failed to verify the answer.")
+				break MainLoop
+			}
+			// Parse the JSON
+			var verifyAnswerResponse StartAnswerResponseStruct
+			json.Unmarshal([]byte(resp), &verifyAnswerResponse)
+			// Get rid of salt and parse
+			_, verifyAnswerResponseDesalted := splitSalt(verifyAnswerResponse.Data)
+			// Decode the base64
+			verifyAnswerResponseDesaltedDecoded, _ := base64.StdEncoding.DecodeString(verifyAnswerResponseDesalted)
+			// Unmarshal the data using json
+			var verifyAnswerResponseDesaltedDecodedData VerifyAnswerResponseStruct
+			json.Unmarshal(verifyAnswerResponseDesaltedDecoded, &verifyAnswerResponseDesaltedDecodedData)
+			// Update topicCode
+			topicCode = vocabTaskData.TopicCode
+			// Check whether the answer is correct
+			if verifyAnswerResponseDesaltedDecodedData.AnswerResult != 1 {
+				// Its incorrect. Lets guess another one.
+				wordsToSubmit = []string{}
+				// Get all options
+				for _, option := range vocabTaskData.Options {
+					wordsToSubmit = append(wordsToSubmit, option.Content)
+				}
+				// Shuffle the options
+				rand.Shuffle(len(wordsToSubmit), func(i, j int) { wordsToSubmit[i], wordsToSubmit[j] = wordsToSubmit[j], wordsToSubmit[i] })
+
+				// Summon answer string
+				var answerString string
+				for _, word := range wordsToSubmit {
+					answerString += word + ","
+				}
+
+				// Summon JSON
+				verifyJSON := fmt.Sprintf(`{"answer":"%s","topic_code":"%s","timestamp":%d,"version":"%s","sign":"%s","app_type":%s}`,
+					answerString[:len(answerString)-1],
+					topicCode,
+					time.Now().UnixMilli(),
+					taskDetail.Versions,
+					summonSign(),
+					taskDetail.AppType,
+				)
+				resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
+				if !strings.Contains(resp, `"code":1`) {
+					info.SetText("Failed to verify the answer.")
+					log.Println("Failed to verify the answer.")
+					break MainLoop
+				}
+				// Parse the JSON
+				var verifyAnswerResponse StartAnswerResponseStruct
+				json.Unmarshal([]byte(resp), &verifyAnswerResponse)
+				// Get rid of salt and parse
+				_, verifyAnswerResponseDesalted := splitSalt(verifyAnswerResponse.Data)
+				// Decode the base64
+				verifyAnswerResponseDesaltedDecoded, _ := base64.StdEncoding.DecodeString(verifyAnswerResponseDesalted)
+				// Unmarshal the data using json
+				var verifyAnswerResponseDesaltedDecodedData VerifyAnswerResponseStruct
+				json.Unmarshal(verifyAnswerResponseDesaltedDecoded, &verifyAnswerResponseDesaltedDecodedData)
+				// Update topicCode
+				topicCode = vocabTaskData.TopicCode
+				// If its wrong again then idk what to do.
+			}
+
+		// Fill in blanks
+		case 51:
+			ans := answer.FindAnswer(51, answer.VocabTaskStruct(vocabTaskData), string(rawDecodedString))
+			// If really cant find one, fuck it.
+			if !ans.Found && !ans.Detail.Uncertain {
+				ans.Detail.Word = answer.WordList[rand.Intn(len(answer.WordList))].Word
+			}
+			// Summon JSON
+			verifyJSON := fmt.Sprintf(`{"answer":"%s","topic_code":"%s","timestamp":%d,"version":"%s","sign":"%s","app_type":%s}`,
+				ans.Detail.Word,
+				topicCode,
+				time.Now().UnixMilli(),
+				taskDetail.Versions,
+				summonSign(),
+				taskDetail.AppType,
+			)
+
+			// Verify the answer
+			resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
+			if !strings.Contains(resp, `"code":1`) {
+				info.SetText("Failed to verify the answer.")
+				log.Println("Failed to verify the answer.")
+				break MainLoop
+			}
+			// Parse the JSON
+			var verifyAnswerResponse StartAnswerResponseStruct
+			json.Unmarshal([]byte(resp), &verifyAnswerResponse)
+			// Get rid of salt and parse
+			_, verifyAnswerResponseDesalted := splitSalt(verifyAnswerResponse.Data)
+			// Decode the base64
+			verifyAnswerResponseDesaltedDecoded, _ := base64.StdEncoding.DecodeString(verifyAnswerResponseDesalted)
+			// Unmarshal the data using json
+			var verifyAnswerResponseDesaltedDecodedData VerifyAnswerResponseStruct
+			json.Unmarshal(verifyAnswerResponseDesaltedDecoded, &verifyAnswerResponseDesaltedDecodedData)
+			// Update topicCode
+			topicCode = vocabTaskData.TopicCode
+			// Check whether the answer is correct
+			if verifyAnswerResponseDesaltedDecodedData.AnswerResult != 1 {
+				// Its incorrect. Lets guess another one.
+				ans.Detail.Word = answer.WordList[rand.Intn(len(answer.WordList))].Word
+				// Summon JSON
+				verifyJSON := fmt.Sprintf(`{"answer":"%s","topic_code":"%s","timestamp":%d,"version":"%s","sign":"%s","app_type":%s}`,
+					ans.Detail.Word,
+					topicCode,
+					time.Now().UnixMilli(),
+					taskDetail.Versions,
+					summonSign(),
+					taskDetail.AppType,
+				)
+				resp = doPOST(fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/VerifyAnswer", taskPath), verifyJSON)
+				if !strings.Contains(resp, `"code":1`) {
+					info.SetText("Failed to verify the answer.")
+					log.Println("Failed to verify the answer.")
+					break MainLoop
+				}
+				// Parse the JSON
+				var verifyAnswerResponse StartAnswerResponseStruct
+				json.Unmarshal([]byte(resp), &verifyAnswerResponse)
+				// Get rid of salt and parse
+				_, verifyAnswerResponseDesalted := splitSalt(verifyAnswerResponse.Data)
+				// Decode the base64
+				verifyAnswerResponseDesaltedDecoded, _ := base64.StdEncoding.DecodeString(verifyAnswerResponseDesalted)
+				// Unmarshal the data using json
+				var verifyAnswerResponseDesaltedDecodedData VerifyAnswerResponseStruct
+				json.Unmarshal(verifyAnswerResponseDesaltedDecoded, &verifyAnswerResponseDesaltedDecodedData)
+				// Update topicCode
+				topicCode = vocabTaskData.TopicCode
+				// If its wrong again then idk what to do.
+			}
+		default:
+			info.SetText("Unknown topic mode: " + strconv.Itoa(vocabTaskData.TopicMode))
+			log.Println("Unknown topic mode: ", vocabTaskData.TopicMode)
+			break MainLoop
 		}
 
 		// Submit and save it

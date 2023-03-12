@@ -4,6 +4,7 @@ import (
 	"compress/flate"
 	"compress/gzip"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -17,6 +18,12 @@ func doPOST(url string, data string) string {
 	req, _ := http.NewRequest("POST", url, strings.NewReader(data))
 	//Add headers and cookies
 	req.Header = dataset.RequestInfo.Header
+	req.Header.Set("Accept", "application/json, text/plain, */*")
+	req.Header.Set("Accept-Encoding", "gzip, deflate, br")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Length", fmt.Sprint(len(data)))
+	req.Header.Set("Origin", "https://app.vocabgo.com")
+
 	for i := 0; i < len(dataset.RequestInfo.Cookies); i++ {
 		req.AddCookie(dataset.RequestInfo.Cookies[i])
 	}

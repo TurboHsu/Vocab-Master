@@ -17,7 +17,8 @@ import (
 	"github.com/andybalholm/brotli"
 )
 
-func GrabWord(word string, dataset *VocabDataset) {
+func GrabWord(word string, dataset *VocabDataset, delay int) {
+	time.Sleep(time.Duration(delay) * time.Millisecond)
 	url := fmt.Sprintf("https://app.vocabgo.com/student/api/Student/Course/StudyWordInfo?course_id=%s&list_id=%s&word=%s&timestamp=%d&version=%s&app_type=1",
 		dataset.CurrentTask.TaskID,
 		dataset.CurrentTask.TaskSet,

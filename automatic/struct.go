@@ -110,3 +110,13 @@ type SubmitAnswerAndSaveStruct struct {
 	Sign        string `json:"sign"`
 	AppType     int    `json:"app_type"`
 }
+
+	
+type VerifyAnswerResponseStruct struct {
+	Word           string `json:"word"`
+	TopicCode      string `json:"topic_code"`
+	OverStatus     int    `json:"over_status"`
+	AnswerResult   int    `json:"answer_result"`
+	CleanStatus    int    `json:"clean_status"`
+	AnswerCorrects []int  `json:"answer_corrects"`
+}
