@@ -1,8 +1,6 @@
 package grab
 
 import (
-	"compress/flate"
-	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -14,8 +12,12 @@ import (
 	"time"
 
 	"github.com/TurboHsu/Vocab-Master/answer"
-	"github.com/andybalholm/brotli"
 )
+
+var DatasetValid bool
+var FetchIdentity bool
+var IsDatabaseLoaded bool
+var Dataset VocabDataset
 
 func GrabWord(word string, dataset *VocabDataset, delay int) {
 	time.Sleep(time.Duration(delay) * time.Millisecond)
@@ -38,10 +40,14 @@ func GrabWord(word string, dataset *VocabDataset, delay int) {
 		log.Println("[E]" + err.Error())
 	}
 	defer response.Body.Close()
-	read, _ := switchContentEncoding(response)
+	read, _, _ := switchContentEncoding(response)
 	raw, _ := io.ReadAll(read)
 	var rawData VocabRawJSONStruct
 	json.Unmarshal(raw, &rawData)
+	if len(rawData.Data) < 32 {
+		log.Println("[E] Data length is too short, ERR!")
+		return
+	}
 	rawJSON, _ := base64.StdEncoding.DecodeString(rawData.Data[32:])
 	var wordInfoRaw WordInfoJSON
 	json.Unmarshal(rawJSON, &wordInfoRaw)
@@ -93,19 +99,4 @@ func GrabWord(word string, dataset *VocabDataset, delay int) {
 		log.Printf("[E] Error when grabbing words: version %s unsupported!\n", wordInfoRaw.Version)
 	}
 	answer.WordList = append(answer.WordList, wordInfo)
-	return
-}
-
-func switchContentEncoding(res *http.Response) (bodyReader io.Reader, err error) {
-	switch res.Header.Get("Content-Encoding") {
-	case "gzip":
-		bodyReader, err = gzip.NewReader(res.Body)
-	case "deflate":
-		bodyReader = flate.NewReader(res.Body)
-	case "br":
-		bodyReader = brotli.NewReader(res.Body)
-	default:
-		bodyReader = res.Body
-	}
-	return
 }

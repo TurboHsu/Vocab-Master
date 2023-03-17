@@ -94,6 +94,11 @@ func main() {
 	})
 	toggle.Checked = true
 
+	grabConsole := widget.NewButton("Database Console", func() {
+		grabWindow := grab.GenerateNewWindow(&a)
+		grabWindow.Show()
+	})
+
 	auto = widget.NewButton("Automation", func() {
 		autoWindow := automatic.GenerateNewWindow(&a)
 		autoWindow.Show()
@@ -111,7 +116,7 @@ func main() {
 	window.SetContent(
 		container.NewVBox(label,
 			container.NewHBox(toggle, jsHijackCheck),
-			container.NewHBox(openBtn, auto),
+			container.NewHBox(openBtn, auto, grabConsole),
 		),
 	)
 

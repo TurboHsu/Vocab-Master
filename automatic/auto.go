@@ -514,6 +514,10 @@ func startAutomation() {
 				break MainLoop
 			}
 
+			
+			time.Sleep(1 * time.Second)
+
+
 			// Submit and save it
 			var submitAnswerAndSaveData SubmitAnswerAndSaveStruct
 			submitAnswerAndSaveData.TopicCode = topicCode

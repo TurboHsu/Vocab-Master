@@ -1,6 +1,8 @@
 package answer
 
 import (
+	"fmt"
+	"log"
 	"regexp"
 	"sort"
 	"strings"
@@ -11,6 +13,26 @@ var WordList []WordInfo
 func FindAnswer(topicID int, vocabTaskInfo VocabTaskStruct, rawJSON string) (ans Answer) {
 	// Do stuff
 	switch topicID {
+	// Choose translation from word	
+	case 15:
+		stemTrimed := strings.ReplaceAll(vocabTaskInfo.Stem.Content, " ", "")
+	Loop15:
+		for i := 0; i < len(WordList); i++ {
+			if WordList[i].Word == stemTrimed {
+				// Match the translation
+				for j := 0; j < len(WordList[i].Content); j++ {
+					for k := 0; k < len(vocabTaskInfo.Options); k++ {
+						if compareTranslation(WordList[i].Content[j].Meaning, vocabTaskInfo.Options[k].Content) {
+							ans.Found = true
+							ans.Detail.Translation = WordList[i].Content[j].Meaning
+							ans.Index = append(ans.Index, k)
+							break Loop15
+						}
+					}
+				}
+			}
+		}
+
 	// Choose translation based on some word
 	case 11:
 		stemConverted := strings.ReplaceAll(vocabTaskInfo.Stem.Content, "  ", " ")
@@ -34,6 +56,9 @@ func FindAnswer(topicID int, vocabTaskInfo VocabTaskStruct, rawJSON string) (ans
 				break
 			}
 		}
+		// Debug
+		log.Println(vocabTaskInfo.Options)
+
 
 	// Choose translation based on some voice
 	case 22:
@@ -137,6 +162,7 @@ func FindAnswer(topicID int, vocabTaskInfo VocabTaskStruct, rawJSON string) (ans
 		}
 	}
 
+	log.Println("[I] Found ans: " + fmt.Sprintln(ans))
 	return
 }
 

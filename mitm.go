@@ -32,21 +32,22 @@ func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 	if f.Request.URL.Host != "app.vocabgo.com" {
 		return
 	}
-	////Debug
-	//if !debug {
-	//	//Update Cookie and Header
-	//	dataset.RequestInfo.Cookies = f.Request.Raw().Cookies()
-	//	dataset.RequestInfo.Header = f.Request.Raw().Header
-	//} else {
-	//	f.Request.Header = dataset.RequestInfo.Header
-	//	f.Request.Raw().Cookies() = dataset.RequestInfo.Cookies
-	//}
 
 	// Automation mode hook
 	if automatic.Enabled {
 		return
 	}
-	if strings.Contains(f.Request.URL.Path, "/api/Student/ClassTask/SubmitChoseWord") || strings.Contains(
+	if grab.FetchIdentity && strings.Contains(f.Request.URL.Path, "/api/Student") {
+		// Fetch identity
+		//Update Cookie and Header
+		grab.Dataset.RequestInfo.Cookies = f.Request.Raw().Cookies()
+		grab.Dataset.RequestInfo.Header = f.Request.Raw().Header
+		grab.DatasetValid = true
+		grab.FetchIdentityTrigger.Text = "Fetched!"
+		grab.FetchIdentityTrigger.Refresh()
+	}
+
+	if !grab.IsDatabaseLoaded && strings.Contains(f.Request.URL.Path, "/api/Student/ClassTask/SubmitChoseWord") || strings.Contains(
 		f.Request.URL.Path, "/api/Student/StudyTask/SubmitChoseWord") {
 		//Adapt class task
 		//Flush word storage and wordlist
@@ -141,7 +142,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 	if IsEnabled {
 
 		//If the progress bar has hit 100%, then hide it
-		if progressBar.Value == 1 {
+		if !grab.IsDatabaseLoaded && progressBar.Value == 1 {
 			progressBar.Hide()
 		}
 
@@ -181,6 +182,28 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		case 0:
 			//UI
 			infoLabel.SetText("Seems like you are entering an new task!\nPlease wait until progress bar reach 100%.")
+		// Choose the translation from specific word
+		case 15:
+			ans := answer.FindAnswer(15, answer.VocabTaskStruct(vocabTask), "")
+
+			if len(ans.Index) > 0 {
+				//Tag out the correct answer
+				regex := regexp.MustCompile(`（.*?）`)
+				newJSON := string(rawDecodedString)
+				newJSON = string(regex.ReplaceAll([]byte(newJSON), []byte("")))
+				newJSON = strings.Replace(newJSON, vocabTask.Options[ans.Index[0]].Content, "-> "+vocabTask.Options[ans.Index[0]].Content+" <-", 1)
+				//newJSON := strings.Replace(string(rawDecodedString), vocabTask.Stem.Content, vocabTask.Stem.Content+" ["+translation+"]", 1)
+				repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
+				vocabRawJSON.Data = JSONSalt + repackedBase64
+				body, _ := json.Marshal(vocabRawJSON)
+				var b bytes.Buffer
+				br := brotli.NewWriter(&b)
+				br.Write(body)
+				br.Flush()
+				br.Close()
+				f.Response.Body = b.Bytes()
+			}
+
 		//Choose translation of specific word from a sentence
 		case 11:
 			ans := answer.FindAnswer(11, answer.VocabTaskStruct(vocabTask), "")
@@ -212,6 +235,8 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			}
 
 		//Choose word from voice
+		case 21: // Its the same
+			fallthrough
 		case 22:
 			ans := answer.FindAnswer(22, answer.VocabTaskStruct(vocabTask), "")
 
@@ -309,12 +334,10 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 
 				//Change the tip
 				regexReplaceJSON := regexp.MustCompile(`"w_tip":".*?"`)
-				regexGetWord := regexp.MustCompile(`{.*?}`)
-				theWord := regexGetWord.FindString(ans.Detail.Word)
-				newJSON := regexReplaceJSON.ReplaceAllString(string(rawDecodedString), `"w_tip":"`+theWord[1:len(theWord)-1]+`"`)
+				newJSON := regexReplaceJSON.ReplaceAllString(string(rawDecodedString), `"w_tip":"`+ans.Detail.Word+`"`)
 
 				//Change the translation
-				newJSON = strings.Replace(newJSON, ans.Detail.Raw, ans.Detail.Word, 1)
+				newJSON = strings.Replace(newJSON, ans.Detail.Raw, ans.Detail.Raw+ans.Detail.Word, 1)
 
 				repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
 				vocabRawJSON.Data = JSONSalt + repackedBase64
