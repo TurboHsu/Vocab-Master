@@ -1,50 +1,77 @@
 package aid
 
 import (
-	"fmt"
+	"math/rand"
 	"strconv"
 	"time"
 
+	"github.com/TurboHsu/Vocab-Master/answer"
 	"github.com/go-vgo/robotgo"
 )
 
-var offset [2]int = [2]int{0,0}
-
 func eventLoop() {
 	// parse the wait sec
-	sec, _ := strconv.Atoi(WaitSecEntry.Text)
+	sleepms, _ := strconv.Atoi(WaitSecEntry.Text)
 	for {
 		if !IsEnabled {
 			break
 		}
-		srcBitmap := robotgo.CaptureScreen()
-		x, y := robotgo.FindBitmap(robotgo.ToMMBitmapRef(bitmapIndicator), srcBitmap, 0.35)
-		fmt.Println(x,y)
-		if x != -1 && y != -1 {
-			x += offset[0]
-			y += offset[1]
-			robotgo.Move(x, y)
-			robotgo.Click("left")
+		switch answer.CurrentAnswer.TopicMode {
+		case 0:
+			// just click
+			clickPosition("next")
+		case 15:
+			fallthrough
+		case 11:
+			fallthrough
+		case 21:
+			fallthrough
+		case 22:
+			if len(answer.CurrentAnswer.Index) > 0 {
+				// vertical thing
+				clickPosition("v" + strconv.Itoa(answer.CurrentAnswer.Index[0]))
+				time.Sleep(time.Duration(sleepms) * time.Millisecond)
+				clickPosition("next")
+			} else {
+				// Guessing
+				clickPosition("v" + strconv.Itoa(rand.Intn(4)))
+				time.Sleep(time.Duration(sleepms) * time.Millisecond)
+				clickPosition("next")
+			}
+		case 31:
+			// cannot deal with this
+		case 32:
+			if len(answer.CurrentAnswer.Index) > 0 {
+				for _, i := range answer.CurrentAnswer.Index {
+					clickPosition("h" + strconv.Itoa(i))
+					time.Sleep(time.Duration(sleepms) * time.Millisecond)
+				}
+				// Guessing
+				clickPosition("h" + strconv.Itoa(rand.Intn(6)))
+				time.Sleep(time.Duration(sleepms) * time.Millisecond)
+				clickPosition("next")
+			} else {
+				// Guessing
+				clickPosition("h" + strconv.Itoa(rand.Intn(6)))
+				time.Sleep(time.Duration(sleepms) * time.Millisecond)
+				clickPosition("next")
+			}
+		case 51:
+			// fill in the blank
+			robotgo.KeyTap("tab")
+			robotgo.TypeStr(answer.CurrentAnswer.Detail.Word)
+			clickPosition("submit")
+			time.Sleep(time.Duration(sleepms) * time.Millisecond)
+			clickPosition("next")
+		default:
+			// do nothing
 		}
-		time.Sleep(time.Millisecond * time.Duration(sec))
-		x, y = robotgo.FindBitmap(robotgo.ToMMBitmapRef(bitmapNextBtn), srcBitmap, 0.2)
-		fmt.Println(x, y)
-		if x != -1 && y != -1 {
-			x += offset[0]
-			y += offset[1]
-			robotgo.Move(x, y)
-			robotgo.Click("left")
-		}
-		time.Sleep(time.Millisecond * time.Duration(sec))
-		robotgo.FreeBitmap(srcBitmap)
+		time.Sleep(time.Duration(sleepms) * time.Millisecond)
 	}
 }
 
-func adjustOffset() {
-	srcBitmap := robotgo.CaptureScreen()
-	pos := getPosByHotkey("`")
-	x, y := robotgo.FindBitmap(robotgo.ToMMBitmapRef(bitmapIndicator), srcBitmap, 0.2)
-	offset[0] = pos[0][0] - x
-	offset[1] = pos[0][1] - y
-	robotgo.FreeBitmap(srcBitmap)
+func clickPosition(mapIndex string) {
+	pos := posMap[mapIndex]
+	robotgo.Move(pos[0], pos[1])
+	robotgo.Click("left", false)
 }

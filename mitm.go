@@ -189,6 +189,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		//Introducing words
 		case 0:
 			//UI
+			answer.CurrentAnswer.TopicMode = 0
 			infoLabel.SetText("Seems like you are entering an new task!\nPlease wait until progress bar reach 100%.")
 		// Choose the translation from specific word
 		case 15:
@@ -298,10 +299,12 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			//Show answer in the UI
 
 			newJSON := string(rawDecodedString)
-			for i := 0; i < len(tag); i++ {
-				if aid.ChangeTopic31IndicatorWorkingMode {
-					newJSON = strings.Replace(newJSON, `"content":"`+tag[i]+`"`, `"content":"` + "👉" + tag[i] + `"`, 1)
-				} else {
+			if aid.ChangeTopic31IndicatorWorkingMode {
+				for i := 0; i < len(tag); i++ {
+					newJSON = strings.Replace(newJSON, `"content":"`+tag[i]+`"`, `"content":"`+"👉"+tag[i]+`"`, 1)
+				}
+			} else {
+				for i := 0; i < len(detag); i++ {
 					newJSON = strings.Replace(newJSON, `"content":"`+detag[i]+`"`, `"content":"错误答案"`, 1)
 				}
 			}
