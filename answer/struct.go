@@ -6,6 +6,7 @@ type WordInfo struct {
 }
 
 type Answer struct {
+	TopicMode int
 	Index  []int
 	Found  bool
 	Detail struct {

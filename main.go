@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"github.com/TurboHsu/Vocab-Master/aid"
 	"github.com/TurboHsu/Vocab-Master/automatic"
 	"github.com/TurboHsu/Vocab-Master/grab"
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
@@ -113,10 +114,15 @@ func main() {
 		platform.OpenCertDir()
 	})
 
+	aidConsoleBtn := widget.NewButton("Aid Console", func() {
+		aidWindow := aid.GenerateNewWindow(&a)
+		aidWindow.Show()
+	})
+
 	window.SetContent(
 		container.NewVBox(label,
 			container.NewHBox(toggle, jsHijackCheck),
-			container.NewHBox(openBtn, auto, grabConsole),
+			container.NewHBox(openBtn, auto, grabConsole, aidConsoleBtn),
 		),
 	)
 

@@ -12,6 +12,7 @@ import (
 
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"github.com/TurboHsu/Vocab-Master/aid"
 	"github.com/TurboHsu/Vocab-Master/answer"
 	"github.com/TurboHsu/Vocab-Master/automatic"
 	"github.com/TurboHsu/Vocab-Master/grab"
@@ -45,6 +46,13 @@ func (c *VocabMasterHandler) Request(f *proxy.Flow) {
 		grab.DatasetValid = true
 		grab.FetchIdentityTrigger.Text = "Fetched!"
 		grab.FetchIdentityTrigger.Refresh()
+	}
+
+	if strings.Contains(f.Request.URL.Path, "/api/Student") {
+		grab.Dataset.RequestInfo.Cookies = f.Request.Raw().Cookies()
+		grab.Dataset.RequestInfo.Header = f.Request.Raw().Header
+		grab.DatasetValid = true
+		automatic.UpdateIdentity(grab.Dataset)
 	}
 
 	if !grab.IsDatabaseLoaded && strings.Contains(f.Request.URL.Path, "/api/Student/ClassTask/SubmitChoseWord") || strings.Contains(
@@ -210,7 +218,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 
 			//UI
 			if ans.Found && len(ans.Index) > 0 {
-				infoLabel.SetText("Hey! The answer is tagged out.\nAnd the answer is [" + ans.Detail.Translation + "]")
+				infoLabel.SetText("The answer is [" + ans.Detail.Translation + "]")
 			} else {
 				infoLabel.SetText("Warn: Answer not found. This might be a bug.")
 			}
@@ -221,7 +229,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 				regex := regexp.MustCompile(`（.*?）`)
 				newJSON := string(rawDecodedString)
 				newJSON = string(regex.ReplaceAll([]byte(newJSON), []byte("")))
-				newJSON = strings.Replace(newJSON, vocabTask.Options[ans.Index[0]].Content, "-> "+vocabTask.Options[ans.Index[0]].Content+" <-", 1)
+				newJSON = strings.Replace(newJSON, vocabTask.Options[ans.Index[0]].Content, "👉"+vocabTask.Options[ans.Index[0]].Content+"", 1)
 				//newJSON := strings.Replace(string(rawDecodedString), vocabTask.Stem.Content, vocabTask.Stem.Content+" ["+translation+"]", 1)
 				repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
 				vocabRawJSON.Data = JSONSalt + repackedBase64
@@ -242,7 +250,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 
 			//UI
 			if ans.Found && len(ans.Index) > 0 {
-				infoLabel.SetText("Hey! The answer is tagged out.\nAnd the answer is [" + vocabTask.Options[ans.Index[0]].Content + "]")
+				infoLabel.SetText("The answer is [" + vocabTask.Options[ans.Index[0]].Content + "]")
 			} else {
 				infoLabel.SetText("Warn: Answer not found. This might be a bug.")
 			}
@@ -252,7 +260,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 				regex := regexp.MustCompile(`（.*?）`)
 				newJSON := string(rawDecodedString)
 				newJSON = string(regex.ReplaceAll([]byte(newJSON), []byte("")))
-				newJSON = strings.Replace(newJSON, vocabTask.Options[ans.Index[0]].Content, "-> "+vocabTask.Options[ans.Index[0]].Content+" <-", 1)
+				newJSON = strings.Replace(newJSON, vocabTask.Options[ans.Index[0]].Content, "👉"+vocabTask.Options[ans.Index[0]].Content, 1)
 				repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
 				vocabRawJSON.Data = JSONSalt + repackedBase64
 				body, _ := json.Marshal(vocabRawJSON)
@@ -267,7 +275,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 		//Choose word pair
 		case 31:
 			ans := answer.FindAnswer(31, answer.VocabTaskStruct(vocabTask), "")
-			var detag []string
+			var tag, detag []string
 
 			// Find incorrect
 			for i := 0; i < len(vocabTask.Options); i++ {
@@ -279,7 +287,9 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 					}
 				}
 				// Not correct, append the content in detag
-				if !isCorrect {
+				if isCorrect {
+					tag = append(tag, vocabTask.Options[i].Content)
+				} else {
 					detag = append(detag, vocabTask.Options[i].Content)
 				}
 			}
@@ -288,9 +298,12 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			//Show answer in the UI
 
 			newJSON := string(rawDecodedString)
-			for i := 0; i < len(detag); i++ {
-				//newJSON = strings.Replace(newJSON, `"content":"`+detag[i]+`"`, `"content":"`+"NOT-["+detag[i]+"]-THIS"+`"`, 1)
-				newJSON = strings.Replace(newJSON, `"content":"`+detag[i]+`"`, `"content":"错误选项"`, 1)
+			for i := 0; i < len(tag); i++ {
+				if aid.ChangeTopic31IndicatorWorkingMode {
+					newJSON = strings.Replace(newJSON, `"content":"`+tag[i]+`"`, `"content":"` + "👉" + tag[i] + `"`, 1)
+				} else {
+					newJSON = strings.Replace(newJSON, `"content":"`+detag[i]+`"`, `"content":"错误答案"`, 1)
+				}
 			}
 			repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
 			vocabRawJSON.Data = JSONSalt + repackedBase64

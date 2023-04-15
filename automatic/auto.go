@@ -15,12 +15,22 @@ import (
 	"github.com/TurboHsu/Vocab-Master/grab"
 )
 
+/*
+	DECEPRECATED CODEBASE
+
+	IKD WHY IT DOES NOT WORK
+*/
+
 var dataset grab.VocabDataset
 var Enabled bool
 var pendingWord []string
 
 func FetchDataset(data grab.VocabDataset) {
 	dataset = data
+}
+
+func UpdateIdentity(data grab.VocabDataset) {
+	dataset.RequestInfo = data.RequestInfo
 }
 
 func startAutomation() {
@@ -514,9 +524,7 @@ func startAutomation() {
 				break MainLoop
 			}
 
-			
 			time.Sleep(1 * time.Second)
-
 
 			// Submit and save it
 			var submitAnswerAndSaveData SubmitAnswerAndSaveStruct

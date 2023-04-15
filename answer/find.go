@@ -10,8 +10,11 @@ import (
 
 var WordList []WordInfo
 
+var CurrentAnswer Answer
+
 func FindAnswer(topicID int, vocabTaskInfo VocabTaskStruct, rawJSON string) (ans Answer) {
 	// Do stuff
+	ans.TopicMode = topicID
 	switch topicID {
 	// Choose translation from word	
 	case 15:
@@ -163,6 +166,7 @@ func FindAnswer(topicID int, vocabTaskInfo VocabTaskStruct, rawJSON string) (ans
 	}
 
 	log.Println("[I] Found ans: " + fmt.Sprintln(ans))
+	CurrentAnswer = ans
 	return
 }
 
