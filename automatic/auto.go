@@ -24,6 +24,7 @@ import (
 var dataset grab.VocabDataset
 var Enabled bool
 var pendingWord []string
+var taskPath = "ClassTask"
 
 func FetchDataset(data grab.VocabDataset) {
 	dataset = data
@@ -34,7 +35,6 @@ func UpdateIdentity(data grab.VocabDataset) {
 }
 
 func startAutomation() {
-	taskPath := "ClassTask" //TODO: This field is not implemented, may get from url from mitm hook.
 
 	// Size of each group
 	groupSize := 5
@@ -92,9 +92,7 @@ func startAutomation() {
 		info.SetText("Submitting word list...")
 		// Generate the url
 		// call get
-		url := fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/SubmitChoseWord",
-			taskPath,
-		)
+		url := fmt.Sprintf("https://app.vocabgo.com/student/api/Student/%s/SubmitChoseWord", taskPath)
 		resp := doPOST(url, jsonSubmitWord)
 		if !strings.Contains(resp, `"code":1`) {
 			info.SetText("Failed to submit word list.")
@@ -106,11 +104,13 @@ func startAutomation() {
 		// Submit the first request
 		info.SetText("Submitting the first request...")
 		// Generate the url
-		url = fmt.Sprintf(`https://app.vocabgo.com/student/api/Student/%s/StartAnswer?task_id=%s&task_type=%s&release_id=%s&opt_img_w=1947&opt_font_size=108&opt_font_c=%%23000000&it_img_w=2287&it_font_size=121&timestamp=%d&version=%s&app_type=%s`,
+		url = fmt.Sprintf(
+			`https://app.vocabgo.com/student/api/Student/%s/StartAnswer?task_id=%s&task_type=%s&release_id=%s&course_id=%s&opt_img_w=1947&opt_font_size=108&opt_font_c=%%23000000&it_img_w=2287&it_font_size=121&timestamp=%d&version=%s&app_type=%s`,
 			taskPath,
 			taskDetail.TaskID,
 			taskDetail.TaskType,
 			taskDetail.ReleaseID,
+			taskDetail.Data.CourseID,
 			lastTime,
 			taskDetail.Versions,
 			taskDetail.AppType,
@@ -120,8 +120,8 @@ func startAutomation() {
 		var startAnswerResponse StartAnswerResponseStruct
 		json.Unmarshal([]byte(resp), &startAnswerResponse)
 		if startAnswerResponse.Code != 1 {
-			info.SetText("Failed to submit the first request.")
-			log.Println("Failed to submit the first request.")
+			info.SetText("Failed to submit the starting request.")
+			log.Println("Failed to submit the starting request.")
 			return
 		}
 		// Get rid of salt and parse

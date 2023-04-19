@@ -3,6 +3,7 @@ package automatic
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
 )
@@ -49,6 +50,10 @@ func TaskDetailProcessor(f *proxy.Flow) {
 	// Trigger valid
 	valid = true
 	confirmed = false
+	typeMatcher, err := regexp.Compile("^.*api/Student/(.*)/Info.*$")
+	if err == nil {
+		taskPath = typeMatcher.FindStringSubmatch(f.Request.URL.Path)[1]
+	}
 	list.Refresh()
 }
 

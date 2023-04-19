@@ -131,7 +131,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 	// Automation hook & processor bypass
 	if automatic.Enabled {
 		// Task detail hook
-		if strings.Contains(f.Request.URL.Path, "/api/Student/ClassTask/Info") {
+		if f.Request.URL.Query().Get("task_id") != "" {
 			automatic.TaskDetailProcessor(f)
 		}
 		return
