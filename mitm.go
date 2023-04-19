@@ -205,7 +205,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 				regex := regexp.MustCompile(`（.*?）`)
 				newJSON := string(rawDecodedString)
 				newJSON = string(regex.ReplaceAll([]byte(newJSON), []byte("")))
-				newJSON = strings.Replace(newJSON, vocabTask.Options[ans.Index[0]].Content, "-> "+vocabTask.Options[ans.Index[0]].Content+" <-", 1)
+				newJSON = strings.Replace(newJSON, vocabTask.Options[ans.Index[0]].Content, "👉"+vocabTask.Options[ans.Index[0]].Content, 1)
 				//newJSON := strings.Replace(string(rawDecodedString), vocabTask.Stem.Content, vocabTask.Stem.Content+" ["+translation+"]", 1)
 				repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
 				vocabRawJSON.Data = JSONSalt + repackedBase64
