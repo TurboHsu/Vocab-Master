@@ -47,6 +47,7 @@ func loadPosPreset() {
 		log.Println("Error when loading posMap:", err)
 		return
 	}
+	posMap = posMapJSON.PosMap
 }
 
 
