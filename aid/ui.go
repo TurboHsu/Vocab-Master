@@ -63,6 +63,14 @@ func GenerateNewWindow(app *fyne.App) (window fyne.Window) {
 				getNextPosBtn,
 				getSubmitBtn,
 			),
+			container.NewHBox(
+				widget.NewButton("Save PosMap", func() {
+					savePosPreset()
+				}),
+				widget.NewButton("Load PosMap", func() {
+					loadPosPreset()
+				}),
+			),
 			enableLoopTrigger,
 		),
 	)

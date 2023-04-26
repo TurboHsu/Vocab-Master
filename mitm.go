@@ -163,6 +163,11 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 
 		//Judge whether is the last task
 		if vocabRawJSON.Msg != "success" {
+			if vocabRawJSON.Msg == "需要选词！" {
+				//UI
+				answer.CurrentAnswer.TopicMode = -200
+				infoLabel.SetText("You have completed all tasks. Please wait for the next task.")
+			}
 			return
 		}
 

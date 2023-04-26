@@ -17,6 +17,10 @@ func eventLoop() {
 			break
 		}
 		switch answer.CurrentAnswer.TopicMode {
+		case -200:
+			// Done
+			IsEnabled = false
+			return
 		case 0:
 			// just click
 			clickPosition("next")

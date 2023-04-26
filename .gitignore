@@ -7,3 +7,4 @@ vocab-master.exe
 /VocabMaster.app/
 temp/
 *.exe
+posMap.json

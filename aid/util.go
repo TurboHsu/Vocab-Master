@@ -1,8 +1,54 @@
 package aid
 
 import (
+	"encoding/json"
+	"log"
+	"os"
+
 	"github.com/go-vgo/robotgo"
 )
+
+// savePosPreset saves the posMap
+func savePosPreset() {
+	// Save the posMap
+	byteArr, _ := json.Marshal(PosMapJSON{PosMap: posMap})
+	file, err := os.OpenFile("posMap.json", os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println("Error when saving posMap:", err)
+		return
+	}
+	defer file.Close()
+	os.WriteFile("posMap.json", byteArr, 0644)
+}
+
+func loadPosPreset() {
+	// Check whether the file exists
+	if _, err := os.Stat("posMap.json"); os.IsNotExist(err) {
+		log.Println("posMap.json not found.")
+		return
+	}
+	file, err := os.OpenFile("posMap.json", os.O_RDONLY, 0644)
+	if err != nil {
+		log.Println("Error when loading posMap:", err)
+		return
+	}
+	defer file.Close()
+	// Read the file
+	byteArr := make([]byte, 1024)
+	n, err := file.Read(byteArr)
+	if err != nil {
+		log.Println("Error when loading posMap:", err)
+		return
+	}
+	// Parse the file
+	var posMapJSON PosMapJSON
+	err = json.Unmarshal(byteArr[:n], &posMapJSON)
+	if err != nil {
+		log.Println("Error when loading posMap:", err)
+		return
+	}
+}
+
 
 // getPosByHotkey get position by pressing single hotkey twice
 func getPosByHotkey(key string) (ret [2][2]int) {
@@ -52,4 +98,8 @@ func min(x int, y int) int {
 		return x
 	}
 	return y
+}
+
+type PosMapJSON struct {
+	PosMap map[string][2]int `json:"posMap"`
 }
