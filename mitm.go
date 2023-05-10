@@ -205,7 +205,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 				regex := regexp.MustCompile(`（.*?）`)
 				newJSON := string(rawDecodedString)
 				newJSON = string(regex.ReplaceAll([]byte(newJSON), []byte("")))
-				newJSON = strings.Replace(newJSON, vocabTask.Options[ans.Index[0]].Content, "👉"+vocabTask.Options[ans.Index[0]].Content, 1)
+				newJSON = strings.Replace(newJSON, vocabTask.Options[ans.Index[0]].Content, "👉 "+vocabTask.Options[ans.Index[0]].Content, 1)
 				//newJSON := strings.Replace(string(rawDecodedString), vocabTask.Stem.Content, vocabTask.Stem.Content+" ["+translation+"]", 1)
 				repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
 				vocabRawJSON.Data = JSONSalt + repackedBase64
@@ -235,7 +235,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 				regex := regexp.MustCompile(`（.*?）`)
 				newJSON := string(rawDecodedString)
 				newJSON = string(regex.ReplaceAll([]byte(newJSON), []byte("")))
-				newJSON = strings.Replace(newJSON, vocabTask.Options[ans.Index[0]].Content, "👉"+vocabTask.Options[ans.Index[0]].Content+"", 1)
+				newJSON = strings.Replace(newJSON, vocabTask.Options[ans.Index[0]].Content, "👉 "+vocabTask.Options[ans.Index[0]].Content+"", 1)
 				//newJSON := strings.Replace(string(rawDecodedString), vocabTask.Stem.Content, vocabTask.Stem.Content+" ["+translation+"]", 1)
 				repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
 				vocabRawJSON.Data = JSONSalt + repackedBase64
@@ -266,7 +266,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 				regex := regexp.MustCompile(`（.*?）`)
 				newJSON := string(rawDecodedString)
 				newJSON = string(regex.ReplaceAll([]byte(newJSON), []byte("")))
-				newJSON = strings.Replace(newJSON, vocabTask.Options[ans.Index[0]].Content, "👉"+vocabTask.Options[ans.Index[0]].Content, 1)
+				newJSON = strings.Replace(newJSON, vocabTask.Options[ans.Index[0]].Content, "👉 "+vocabTask.Options[ans.Index[0]].Content, 1)
 				repackedBase64 := base64.StdEncoding.EncodeToString([]byte(newJSON))
 				vocabRawJSON.Data = JSONSalt + repackedBase64
 				body, _ := json.Marshal(vocabRawJSON)
@@ -306,7 +306,7 @@ func (c *VocabMasterHandler) Response(f *proxy.Flow) {
 			newJSON := string(rawDecodedString)
 			if aid.ChangeTopic31IndicatorWorkingMode {
 				for i := 0; i < len(tag); i++ {
-					newJSON = strings.Replace(newJSON, `"content":"`+tag[i]+`"`, `"content":"`+"👉"+tag[i]+`"`, 1)
+					newJSON = strings.Replace(newJSON, `"content":"`+tag[i]+`"`, `"content":"`+"👉 "+tag[i]+`"`, 1)
 				}
 			} else {
 				for i := 0; i < len(detag); i++ {
