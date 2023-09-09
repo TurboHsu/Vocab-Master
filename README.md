@@ -3,11 +3,8 @@
 
 <img src="icon/VocabMaster.svg" width="120" alt="logo">
 
-或许有点用
-
-### WIP
- - 正在尝试让他自动化。
- - 测试任务 （已完成一部分）
+### WARN
+我自己用不上了，只提供有限的维护。
 
 ### Tip
 使用```-proxy=false```参数可以使程序在打开时不对系统代理进行操作
