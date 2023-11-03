@@ -1,10 +1,8 @@
 # Vocab Master
+# 本项目已不再积极维护
 ## 词达人辅助工具
 
 <img src="icon/VocabMaster.svg" width="120" alt="logo">
-
-### WARN
-我自己用不上了，只提供有限的维护。
 
 ### Tip
 使用```-proxy=false```参数可以使程序在打开时不对系统代理进行操作
